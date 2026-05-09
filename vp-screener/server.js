@@ -98,8 +98,6 @@ const SCAN_PAIRS = [
 ];
 
 const TF_MAP = {
-  '5m': '5m',
-  '15m': '15m',
   '30m': '30m',
   '1h': '1h',
   '4h': '4h',
