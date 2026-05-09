@@ -20,21 +20,26 @@ const SCAN_PAIRS = [
 
 const TF_MAP = { '30m':'30m','1h':'1h','4h':'4h','12h':'12h','1d':'1d' };
 
+// Cache to avoid re-scanning everything every time
+let scanCache = { signals: [], scanned: 0, ts: null };
+
 function httpsGet(reqUrl) {
   return new Promise((resolve, reject) => {
-    https.get(reqUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
+    const req = https.get(reqUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
         try { resolve(JSON.parse(data)); }
         catch(e) { reject(new Error('JSON parse error')); }
       });
-    }).on('error', reject);
+    });
+    req.setTimeout(8000, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.on('error', reject);
   });
 }
 
 async function fetchKlines(symbol, interval, limit) {
-  limit = limit || 100;
+  limit = limit || 60;
   const reqUrl = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
   const raw = await httpsGet(reqUrl);
   if (!Array.isArray(raw)) throw new Error('Bad response');
@@ -90,19 +95,12 @@ function detectSignals(symbol, candles, tf) {
   const price = cur.close;
   const signals = [];
   const pct = (a, b) => Math.abs(a - b) / (b || 1) * 100;
-
-  // VAH BREAK — prev closed below VAH, current closes above
-  if (prev.close <= vp.vah && cur.close > vp.vah) {
+  if (prev.close <= vp.vah && cur.close > vp.vah)
     signals.push({ symbol, type: 'VAH', price, vp, strength: Math.min(100, Math.round(55 + pct(price, vp.vah) * 3)), tf });
-  }
-  // VAL RECLAIM — prev closed below VAL, current reclaims above
-  if (prev.close < vp.val && cur.close >= vp.val && cur.close < vp.vah) {
+  if (prev.close < vp.val && cur.close >= vp.val && cur.close < vp.vah)
     signals.push({ symbol, type: 'VAL', price, vp, strength: Math.min(100, Math.round(50 + pct(price, vp.val) * 5)), tf });
-  }
-  // POC REACTION — price bounces off POC from below
-  if (cur.low <= vp.poc * 1.003 && cur.close > vp.poc && prev.close <= vp.poc * 1.004) {
+  if (cur.low <= vp.poc * 1.003 && cur.close > vp.poc && prev.close <= vp.poc * 1.004)
     signals.push({ symbol, type: 'POC', price, vp, strength: Math.min(100, Math.round(48 + pct(price, vp.poc) * 6)), tf });
-  }
   return signals;
 }
 
@@ -112,30 +110,32 @@ function setCORS(res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
-async function handleScan(res) {
+// Background scan — runs every 4 minutes
+async function runBackgroundScan() {
   const tfs = Object.keys(TF_MAP);
   const allSignals = [];
   let scanned = 0;
+
+  // Run all pairs concurrently in larger batches — faster
   const jobs = [];
   for (const sym of SCAN_PAIRS) for (const tf of tfs) jobs.push({ sym, tf });
 
-  const CONCURRENCY = 6;
+  const CONCURRENCY = 15;
   for (let i = 0; i < jobs.length; i += CONCURRENCY) {
     const batch = jobs.slice(i, i + CONCURRENCY);
     await Promise.allSettled(batch.map(async ({ sym, tf }) => {
       try {
-        const candles = await fetchKlines(sym, TF_MAP[tf], 120);
+        const candles = await fetchKlines(sym, TF_MAP[tf], 60);
         const sigs = detectSignals(sym, candles, tf);
         allSignals.push(...sigs);
         scanned++;
       } catch(e) {}
     }));
-    await new Promise(r => setTimeout(r, 80));
+    await new Promise(r => setTimeout(r, 50));
   }
 
-  console.log(`[SCAN] Done — ${scanned} scanned, ${allSignals.length} signals`);
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ ok: true, scanned, signals: allSignals, ts: new Date().toISOString() }));
+  scanCache = { signals: allSignals, scanned, ts: new Date().toISOString() };
+  console.log(`[SCAN] ${scanned} scanned, ${allSignals.length} signals`);
 }
 
 const server = http.createServer(async (req, res) => {
@@ -151,12 +151,18 @@ const server = http.createServer(async (req, res) => {
     return res.end(fs.readFileSync(htmlPath));
   }
 
+  // Return cached results instantly, trigger fresh scan in background
   if (pathname === '/api/scan') {
-    try { await handleScan(res); }
-    catch(e) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: false, error: e.message }));
-    }
+    // Return whatever we have immediately
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      ok: true,
+      scanned: scanCache.scanned,
+      signals: scanCache.signals,
+      ts: scanCache.ts || new Date().toISOString()
+    }));
+    // Trigger fresh scan in background (non-blocking)
+    runBackgroundScan().catch(console.error);
     return;
   }
 
@@ -184,4 +190,8 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`VP SCREENER running on ${HOST}:${PORT}`);
+  // Start first scan immediately on boot
+  runBackgroundScan().catch(console.error);
+  // Then repeat every 4 minutes
+  setInterval(() => runBackgroundScan().catch(console.error), 4 * 60 * 1000);
 });
