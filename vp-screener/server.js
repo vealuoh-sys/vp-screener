@@ -7,39 +7,42 @@ const url = require('url');
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
 
-const SCAN_PAIRS = [
-  'BTCUSDT','ETHUSDT','BNBUSDT','SOLUSDT','XRPUSDT',
-  'ADAUSDT','AVAXUSDT','DOGEUSDT','DOTUSDT','MATICUSDT',
-  'LINKUSDT','ATOMUSDT','LTCUSDT','UNIUSDT','AAVEUSDT',
-  'NEARUSDT','FILUSDT','ARBUSDT','OPUSDT','INJUSDT',
-  'SUIUSDT','APTUSDT','SEIUSDT','TIAUSDT','WLDUSDT',
-  'FETUSDT','RENDERUSDT','RUNEUSDT','ORDIUSDT','STXUSDT',
-  'IMXUSDT','SANDUSDT','MANAUSDT','AXSUSDT','FTMUSDT',
-  'EGLDUSDT','ALGOUSDT','GALAUSDT','APEUSDT','GMTUSDT'
+// Top coins to scan by CoinGecko ID mapped to symbol
+const COINS = [
+  {id:'bitcoin',sym:'BTCUSDT'},{id:'ethereum',sym:'ETHUSDT'},
+  {id:'binancecoin',sym:'BNBUSDT'},{id:'solana',sym:'SOLUSDT'},
+  {id:'ripple',sym:'XRPUSDT'},{id:'cardano',sym:'ADAUSDT'},
+  {id:'avalanche-2',sym:'AVAXUSDT'},{id:'dogecoin',sym:'DOGEUSDT'},
+  {id:'polkadot',sym:'DOTUSDT'},{id:'chainlink',sym:'LINKUSDT'},
+  {id:'cosmos',sym:'ATOMUSDT'},{id:'litecoin',sym:'LTCUSDT'},
+  {id:'uniswap',sym:'UNIUSDT'},{id:'aave',sym:'AAVEUSDT'},
+  {id:'near',sym:'NEARUSDT'},{id:'arbitrum',sym:'ARBUSDT'},
+  {id:'optimism',sym:'OPUSDT'},{id:'injective-protocol',sym:'INJUSDT'},
+  {id:'sui',sym:'SUIUSDT'},{id:'aptos',sym:'APTUSDT'},
+  {id:'fetch-ai',sym:'FETUSDT'},{id:'thorchain',sym:'RUNEUSDT'},
+  {id:'immutable-x',sym:'IMXUSDT'},{id:'the-sandbox',sym:'SANDUSDT'},
+  {id:'decentraland',sym:'MANAUSDT'},{id:'axie-infinity',sym:'AXSUSDT'},
+  {id:'fantom',sym:'FTMUSDT'},{id:'algorand',sym:'ALGOUSDT'},
+  {id:'gala',sym:'GALAUSDT'},{id:'stepn',sym:'GMTUSDT'}
 ];
 
-const TF_MAP = { '30m':'30m','1h':'1h','4h':'4h','12h':'12h','1d':'1d' };
-
-// Try multiple Binance endpoints
-const BINANCE_HOSTS = [
-  'api.binance.com',
-  'api1.binance.com',
-  'api2.binance.com',
-  'api3.binance.com'
-];
+const TF_MAP = {
+  '1h': { days: 2, interval: 'hourly' },
+  '4h': { days: 7, interval: 'hourly' },
+  '1d': { days: 30, interval: 'daily' }
+};
 
 let scanCache = { signals: [], scanned: 0, ts: null };
 
-function httpsGetFromHost(host, reqPath) {
+function httpsGet(reqUrl) {
   return new Promise((resolve, reject) => {
     const options = {
-      hostname: host,
-      path: reqPath,
-      method: 'GET',
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
-      timeout: 10000
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'application/json'
+      }
     };
-    const req = https.request(options, (res) => {
+    const req = https.get(reqUrl, options, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
@@ -47,36 +50,32 @@ function httpsGetFromHost(host, reqPath) {
         catch(e) { reject(new Error('JSON parse error')); }
       });
     });
-    req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')); });
+    req.setTimeout(12000, () => { req.destroy(); reject(new Error('Timeout')); });
     req.on('error', reject);
-    req.end();
   });
 }
 
-async function fetchKlines(symbol, interval, limit) {
-  limit = limit || 60;
-  const reqPath = `/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-  
-  // Try each host until one works
-  for (const host of BINANCE_HOSTS) {
-    try {
-      const raw = await httpsGetFromHost(host, reqPath);
-      if (Array.isArray(raw)) {
-        return raw.map(k => ({
-          time: parseInt(k[0]),
-          open: parseFloat(k[1]),
-          high: parseFloat(k[2]),
-          low: parseFloat(k[3]),
-          close: parseFloat(k[4]),
-          volume: parseFloat(k[5]),
-          typical: (parseFloat(k[2]) + parseFloat(k[3]) + parseFloat(k[4])) / 3
-        }));
-      }
-    } catch(e) {
-      console.log(`[WARN] ${host} failed for ${symbol}: ${e.message}`);
-    }
-  }
-  throw new Error(`All Binance hosts failed for ${symbol}`);
+async function fetchOHLC(coinId, days) {
+  // CoinGecko OHLC endpoint - free, no API key needed
+  const reqUrl = `https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=usd&days=${days}`;
+  const raw = await httpsGet(reqUrl);
+  if (!Array.isArray(raw) || raw.length < 10) throw new Error('Bad data');
+  return raw.map(k => ({
+    time: k[0],
+    open: k[1],
+    high: k[2],
+    low: k[3],
+    close: k[4],
+    volume: 0,
+    typical: (k[2] + k[3] + k[4]) / 3
+  }));
+}
+
+async function fetchVolume(coinId) {
+  // Get market data for volume
+  const reqUrl = `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=7&interval=daily`;
+  const raw = await httpsGet(reqUrl);
+  return raw.total_volumes || [];
 }
 
 function calcVolumeProfile(candles) {
@@ -91,9 +90,9 @@ function calcVolumeProfile(candles) {
   const BINS = 24;
   const binSize = range / BINS;
   const vol = new Array(BINS).fill(0);
-  candles.forEach(c => {
+  candles.forEach((c, i) => {
     const idx = Math.min(Math.floor((c.typical - lo) / binSize), BINS - 1);
-    vol[idx] += c.volume;
+    vol[idx] += (i + 1); // use position as proxy for volume weight
   });
   let pocIdx = 0;
   vol.forEach((v, i) => { if (v > vol[pocIdx]) pocIdx = i; });
@@ -136,23 +135,22 @@ function setCORS(res) {
 }
 
 async function runBackgroundScan() {
-  const tfs = Object.keys(TF_MAP);
   const allSignals = [];
   let scanned = 0;
-  const jobs = [];
-  for (const sym of SCAN_PAIRS) for (const tf of tfs) jobs.push({ sym, tf });
 
-  const CONCURRENCY = 10;
-  for (let i = 0; i < jobs.length; i += CONCURRENCY) {
-    const batch = jobs.slice(i, i + CONCURRENCY);
-    await Promise.allSettled(batch.map(async ({ sym, tf }) => {
+  // CoinGecko free tier: max 10-30 req/min, so scan one by one with delay
+  for (const coin of COINS) {
+    for (const [tf, cfg] of Object.entries(TF_MAP)) {
       try {
-        const candles = await fetchKlines(sym, TF_MAP[tf], 60);
-        allSignals.push(...detectSignals(sym, candles, tf));
+        const candles = await fetchOHLC(coin.id, cfg.days);
+        allSignals.push(...detectSignals(coin.sym, candles, tf));
         scanned++;
-      } catch(e) {}
-    }));
-    await new Promise(r => setTimeout(r, 60));
+      } catch(e) {
+        console.log(`[WARN] ${coin.id}/${tf}: ${e.message}`);
+      }
+      // Rate limit: wait 2 seconds between requests for free tier
+      await new Promise(r => setTimeout(r, 2000));
+    }
   }
 
   scanCache = { signals: allSignals, scanned, ts: new Date().toISOString() };
@@ -180,18 +178,17 @@ const server = http.createServer(async (req, res) => {
       signals: scanCache.signals,
       ts: scanCache.ts || new Date().toISOString()
     }));
-    runBackgroundScan().catch(console.error);
     return;
   }
 
   if (pathname === '/api/candles') {
-    const symbol = (parsed.query.symbol || 'BTCUSDT').toUpperCase();
-    const interval = parsed.query.interval || '1h';
+    const coinId = parsed.query.coinid || 'bitcoin';
+    const days = parseInt(parsed.query.days) || 7;
     try {
-      const candles = await fetchKlines(symbol, interval, 100);
+      const candles = await fetchOHLC(coinId, days);
       const vp = calcVolumeProfile(candles);
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ ok: true, symbol, interval, candles, vp }));
+      return res.end(JSON.stringify({ ok: true, candles, vp }));
     } catch(e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: false, error: e.message }));
@@ -200,7 +197,7 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ ok: true }));
+    return res.end(JSON.stringify({ ok: true, cached: scanCache.scanned }));
   }
 
   res.writeHead(404); res.end('Not found');
@@ -208,6 +205,8 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`VP SCREENER running on ${HOST}:${PORT}`);
-  runBackgroundScan().catch(console.error);
-  setInterval(() => runBackgroundScan().catch(console.error), 4 * 60 * 1000);
+  // Start scan after 5 seconds
+  setTimeout(() => runBackgroundScan().catch(console.error), 5000);
+  // Repeat every 15 minutes (CoinGecko rate limits)
+  setInterval(() => runBackgroundScan().catch(console.error), 15 * 60 * 1000);
 });
