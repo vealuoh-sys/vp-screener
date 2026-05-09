@@ -20,12 +20,26 @@ const SCAN_PAIRS = [
 
 const TF_MAP = { '30m':'30m','1h':'1h','4h':'4h','12h':'12h','1d':'1d' };
 
-// Cache to avoid re-scanning everything every time
+// Try multiple Binance endpoints
+const BINANCE_HOSTS = [
+  'api.binance.com',
+  'api1.binance.com',
+  'api2.binance.com',
+  'api3.binance.com'
+];
+
 let scanCache = { signals: [], scanned: 0, ts: null };
 
-function httpsGet(reqUrl) {
+function httpsGetFromHost(host, reqPath) {
   return new Promise((resolve, reject) => {
-    const req = https.get(reqUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
+    const options = {
+      hostname: host,
+      path: reqPath,
+      method: 'GET',
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+      timeout: 10000
+    };
+    const req = https.request(options, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
@@ -33,25 +47,36 @@ function httpsGet(reqUrl) {
         catch(e) { reject(new Error('JSON parse error')); }
       });
     });
-    req.setTimeout(8000, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')); });
     req.on('error', reject);
+    req.end();
   });
 }
 
 async function fetchKlines(symbol, interval, limit) {
   limit = limit || 60;
-  const reqUrl = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-  const raw = await httpsGet(reqUrl);
-  if (!Array.isArray(raw)) throw new Error('Bad response');
-  return raw.map(k => ({
-    time: parseInt(k[0]),
-    open: parseFloat(k[1]),
-    high: parseFloat(k[2]),
-    low: parseFloat(k[3]),
-    close: parseFloat(k[4]),
-    volume: parseFloat(k[5]),
-    typical: (parseFloat(k[2]) + parseFloat(k[3]) + parseFloat(k[4])) / 3
-  }));
+  const reqPath = `/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+  
+  // Try each host until one works
+  for (const host of BINANCE_HOSTS) {
+    try {
+      const raw = await httpsGetFromHost(host, reqPath);
+      if (Array.isArray(raw)) {
+        return raw.map(k => ({
+          time: parseInt(k[0]),
+          open: parseFloat(k[1]),
+          high: parseFloat(k[2]),
+          low: parseFloat(k[3]),
+          close: parseFloat(k[4]),
+          volume: parseFloat(k[5]),
+          typical: (parseFloat(k[2]) + parseFloat(k[3]) + parseFloat(k[4])) / 3
+        }));
+      }
+    } catch(e) {
+      console.log(`[WARN] ${host} failed for ${symbol}: ${e.message}`);
+    }
+  }
+  throw new Error(`All Binance hosts failed for ${symbol}`);
 }
 
 function calcVolumeProfile(candles) {
@@ -110,28 +135,24 @@ function setCORS(res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
-// Background scan — runs every 4 minutes
 async function runBackgroundScan() {
   const tfs = Object.keys(TF_MAP);
   const allSignals = [];
   let scanned = 0;
-
-  // Run all pairs concurrently in larger batches — faster
   const jobs = [];
   for (const sym of SCAN_PAIRS) for (const tf of tfs) jobs.push({ sym, tf });
 
-  const CONCURRENCY = 15;
+  const CONCURRENCY = 10;
   for (let i = 0; i < jobs.length; i += CONCURRENCY) {
     const batch = jobs.slice(i, i + CONCURRENCY);
     await Promise.allSettled(batch.map(async ({ sym, tf }) => {
       try {
         const candles = await fetchKlines(sym, TF_MAP[tf], 60);
-        const sigs = detectSignals(sym, candles, tf);
-        allSignals.push(...sigs);
+        allSignals.push(...detectSignals(sym, candles, tf));
         scanned++;
       } catch(e) {}
     }));
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise(r => setTimeout(r, 60));
   }
 
   scanCache = { signals: allSignals, scanned, ts: new Date().toISOString() };
@@ -151,9 +172,7 @@ const server = http.createServer(async (req, res) => {
     return res.end(fs.readFileSync(htmlPath));
   }
 
-  // Return cached results instantly, trigger fresh scan in background
   if (pathname === '/api/scan') {
-    // Return whatever we have immediately
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       ok: true,
@@ -161,7 +180,6 @@ const server = http.createServer(async (req, res) => {
       signals: scanCache.signals,
       ts: scanCache.ts || new Date().toISOString()
     }));
-    // Trigger fresh scan in background (non-blocking)
     runBackgroundScan().catch(console.error);
     return;
   }
@@ -190,8 +208,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`VP SCREENER running on ${HOST}:${PORT}`);
-  // Start first scan immediately on boot
   runBackgroundScan().catch(console.error);
-  // Then repeat every 4 minutes
   setInterval(() => runBackgroundScan().catch(console.error), 4 * 60 * 1000);
 });
