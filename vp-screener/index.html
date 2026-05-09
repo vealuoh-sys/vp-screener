@@ -6,368 +6,174 @@
 <title>VP SCREENER — Binance Volume Profile</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:      #03080D;
-  --s1:      #080F18;
-  --s2:      #0C1A28;
-  --border:  #132435;
-  --border2: #1E3A55;
-  --acc:     #00FFB2;
-  --acc2:    #00BFFF;
-  --warn:    #FFB800;
-  --vah:     #FF5E3A;
-  --val:     #00FFB2;
-  --poc:     #FFD700;
-  --text:    #B8D4E8;
-  --muted:   #3A6880;
-  --muted2:  #2A4D65;
+:root{
+  --bg:#03080D;--s1:#080F18;--s2:#0C1A28;
+  --border:#132435;--border2:#1E3A55;
+  --acc:#00FFB2;--acc2:#00BFFF;--warn:#FFB800;
+  --vah:#FF5E3A;--val:#00FFB2;--poc:#FFD700;
+  --text:#B8D4E8;--muted:#3A6880;--muted2:#2A4D65;
 }
-
 *{margin:0;padding:0;box-sizing:border-box;}
-
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:'Space Mono',monospace;
-  min-height:100vh;
-  overflow-x:hidden;
-}
-
-/* Grid bg */
-body::before{
-  content:'';
-  position:fixed;inset:0;
-  background-image:
-    linear-gradient(rgba(0,191,255,.018) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,191,255,.018) 1px,transparent 1px);
-  background-size:48px 48px;
-  pointer-events:none;z-index:0;
-}
-
-/* Top glow */
-body::after{
-  content:'';
-  position:fixed;top:-250px;left:50%;
-  transform:translateX(-50%);
-  width:900px;height:500px;
-  background:radial-gradient(ellipse,rgba(0,191,255,.07) 0%,transparent 65%);
-  pointer-events:none;z-index:0;
-}
-
-.app{
-  position:relative;z-index:1;
-  max-width:1480px;margin:0 auto;
-  padding:18px 22px 40px;
-}
-
-/* ── HEADER ── */
-header{
-  display:flex;align-items:center;
-  justify-content:space-between;
-  padding:18px 0 22px;
-  border-bottom:1px solid var(--border);
-  margin-bottom:20px;
-  flex-wrap:wrap;gap:14px;
-}
-
+body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,191,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,191,255,.018) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0;}
+body::after{content:'';position:fixed;top:-250px;left:50%;transform:translateX(-50%);width:900px;height:500px;background:radial-gradient(ellipse,rgba(0,191,255,.07) 0%,transparent 65%);pointer-events:none;z-index:0;}
+.app{position:relative;z-index:1;max-width:1480px;margin:0 auto;padding:18px 22px 40px;}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 0 22px;border-bottom:1px solid var(--border);margin-bottom:20px;flex-wrap:wrap;gap:14px;}
 .logo{display:flex;align-items:center;gap:16px;}
-
-.logo-mark{
-  width:46px;height:46px;
-  border:2px solid var(--acc);
-  display:grid;place-items:center;
-  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
-  background:rgba(0,255,178,.04);
-}
-
+.logo-mark{width:46px;height:46px;border:2px solid var(--acc);display:grid;place-items:center;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));background:rgba(0,255,178,.04);}
 .logo-mark svg{width:24px;height:24px;}
-
 .brand{display:flex;flex-direction:column;gap:2px;}
-
-.brand-name{
-  font-family:'Syne',sans-serif;
-  font-weight:900;font-size:1.4rem;
-  letter-spacing:.15em;color:#fff;
-}
+.brand-name{font-family:'Syne',sans-serif;font-weight:900;font-size:1.4rem;letter-spacing:.15em;color:#fff;}
 .brand-name em{color:var(--acc);font-style:normal;}
-
-.brand-sub{
-  font-size:.58rem;color:var(--muted);
-  letter-spacing:.22em;
-}
-
-.hdr-right{
-  display:flex;align-items:center;
-  gap:14px;flex-wrap:wrap;
-}
-
-.live-pill{
-  display:flex;align-items:center;gap:7px;
-  font-size:.65rem;letter-spacing:.18em;
-  color:var(--acc);
-  border:1px solid rgba(0,255,178,.3);
-  padding:5px 14px;
-  background:rgba(0,255,178,.04);
-  clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px));
-}
-
-.dot{
-  width:7px;height:7px;border-radius:50%;
-  background:var(--acc);
-  animation:blink 1.4s ease-in-out infinite;
-}
-
+.brand-sub{font-size:.58rem;color:var(--muted);letter-spacing:.22em;}
+.hdr-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.live-pill{display:flex;align-items:center;gap:7px;font-size:.65rem;letter-spacing:.18em;color:var(--acc);border:1px solid rgba(0,255,178,.3);padding:5px 14px;background:rgba(0,255,178,.04);clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px));}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--acc);animation:blink 1.4s ease-in-out infinite;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-
 .scan-time{font-size:.6rem;color:var(--muted);letter-spacing:.1em;}
-
-.scan-btn{
-  background:transparent;
-  border:1px solid var(--acc2);
-  color:var(--acc2);
-  font-family:'Space Mono',monospace;
-  font-size:.68rem;letter-spacing:.14em;
-  padding:9px 20px;cursor:pointer;
-  clip-path:polygon(0 0,calc(100% - 9px) 0,100% 9px,100% 100%,9px 100%,0 calc(100% - 9px));
-  transition:all .2s;
-  display:flex;align-items:center;gap:8px;
-}
-.scan-btn:hover:not(:disabled){
-  background:rgba(0,191,255,.1);
-  box-shadow:0 0 24px rgba(0,191,255,.2);
-}
+.scan-btn{background:transparent;border:1px solid var(--acc2);color:var(--acc2);font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.14em;padding:9px 20px;cursor:pointer;clip-path:polygon(0 0,calc(100% - 9px) 0,100% 9px,100% 100%,9px 100%,0 calc(100% - 9px));transition:all .2s;display:flex;align-items:center;gap:8px;}
+.scan-btn:hover:not(:disabled){background:rgba(0,191,255,.1);box-shadow:0 0 24px rgba(0,191,255,.2);}
 .scan-btn:disabled{opacity:.45;cursor:default;}
 .spin{animation:rot 1s linear infinite;display:inline-block;}
 @keyframes rot{to{transform:rotate(360deg)}}
-
-/* ── CONTROLS ── */
-.controls{
-  display:flex;align-items:center;
-  gap:8px;margin-bottom:18px;
-  flex-wrap:wrap;
-}
-
-.ctl-label{
-  font-size:.58rem;color:var(--muted);
-  letter-spacing:.2em;margin-right:2px;
-}
-
-.tf-btn, .sig-btn{
-  background:var(--s1);
-  border:1px solid var(--border);
-  color:var(--muted);
-  font-family:'Space Mono',monospace;
-  font-size:.64rem;letter-spacing:.1em;
-  padding:5px 13px;cursor:pointer;
-  transition:all .16s;
-}
-
+.controls{display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.ctl-label{font-size:.58rem;color:var(--muted);letter-spacing:.2em;margin-right:2px;}
+.tf-btn,.sig-btn{background:var(--s1);border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;font-size:.64rem;letter-spacing:.1em;padding:5px 13px;cursor:pointer;transition:all .16s;}
 .tf-btn.on{border-color:var(--acc2);color:var(--acc2);background:rgba(0,191,255,.07);}
 .tf-btn:hover:not(.on){border-color:var(--muted2);color:var(--text);}
-
 .sig-btn.on-vah{border-color:var(--vah);color:var(--vah);background:rgba(255,94,58,.07);}
 .sig-btn.on-val{border-color:var(--val);color:var(--val);background:rgba(0,255,178,.06);}
 .sig-btn.on-poc{border-color:var(--poc);color:var(--poc);background:rgba(255,215,0,.06);}
-
 .divider{width:1px;height:22px;background:var(--border);margin:0 4px;}
 .flex1{flex:1;}
-
-/* ── STATS ── */
-.stats{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:12px;margin-bottom:20px;
-}
-
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
 @media(max-width:900px){.stats{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:500px){.stats{grid-template-columns:repeat(2,1fr);}}
-
-.stat{
-  background:var(--s1);
-  border:1px solid var(--border);
-  padding:14px 16px;
-  position:relative;overflow:hidden;
-}
-.stat::before{
-  content:'';position:absolute;
-  top:0;left:0;right:0;height:2px;
-  background:var(--c,var(--acc));
-}
-.stat::after{
-  content:'';position:absolute;
-  bottom:-20px;right:-20px;
-  width:70px;height:70px;
-  border-radius:50%;
-  background:radial-gradient(circle,rgba(var(--rgb,0,255,178),.07) 0%,transparent 70%);
-}
+.stat{background:var(--s1);border:1px solid var(--border);padding:14px 16px;position:relative;overflow:hidden;}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--acc));}
 .stat-lbl{font-size:.56rem;color:var(--muted);letter-spacing:.2em;margin-bottom:7px;}
-.stat-val{
-  font-family:'Syne',sans-serif;
-  font-weight:900;font-size:1.9rem;
-  color:var(--c,#fff);line-height:1;
-}
-
-/* ── TABLE ── */
-.tbl-wrap{
-  background:var(--s1);
-  border:1px solid var(--border);
-  overflow:hidden;
-}
-
-.tbl-head{
-  display:grid;
-  grid-template-columns:52px 1fr 100px 100px 100px 100px 120px 80px 90px;
-  padding:10px 18px;
-  background:var(--s2);
-  border-bottom:1px solid var(--border);
-}
-.th{
-  font-size:.56rem;color:var(--muted);
-  letter-spacing:.18em;text-align:right;
-}
+.stat-val{font-family:'Syne',sans-serif;font-weight:900;font-size:1.9rem;color:var(--c,#fff);line-height:1;}
+.tbl-wrap{background:var(--s1);border:1px solid var(--border);overflow:hidden;}
+.tbl-head{display:grid;grid-template-columns:52px 1fr 100px 100px 100px 100px 120px 80px 90px;padding:10px 18px;background:var(--s2);border-bottom:1px solid var(--border);}
+.th{font-size:.56rem;color:var(--muted);letter-spacing:.18em;text-align:right;}
 .th:nth-child(-n+2){text-align:left;}
-
 .rows{min-height:260px;}
-
-.row{
-  display:grid;
-  grid-template-columns:52px 1fr 100px 100px 100px 100px 120px 80px 90px;
-  padding:11px 18px;
-  border-bottom:1px solid rgba(19,36,53,.8);
-  align-items:center;
-  transition:background .15s;
-  animation:fadeUp .28s ease both;
-  opacity:0;
-}
+.row{display:grid;grid-template-columns:52px 1fr 100px 100px 100px 100px 120px 80px 90px;padding:11px 18px;border-bottom:1px solid rgba(19,36,53,.8);align-items:center;transition:background .15s;animation:fadeUp .28s ease both;opacity:0;cursor:pointer;}
 @keyframes fadeUp{to{opacity:1;transform:translateY(0);}from{opacity:0;transform:translateY(8px);}}
-.row:hover{background:rgba(0,255,178,.018);}
-
+.row:hover{background:rgba(0,255,178,.04);}
 .td{font-size:.7rem;text-align:right;color:var(--text);}
 .td:nth-child(-n+2){text-align:left;}
-
 .rank{font-size:.58rem;color:var(--muted);font-weight:700;}
-
 .coin{display:flex;flex-direction:column;gap:3px;}
-.sym{
-  font-family:'Syne',sans-serif;
-  font-weight:700;font-size:.88rem;
-  color:#fff;letter-spacing:.04em;
-}
+.sym{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;color:#fff;letter-spacing:.04em;}
 .pair{font-size:.56rem;color:var(--muted);}
-
 .price{font-size:.74rem;font-weight:700;color:#fff;}
-
 .lvl{font-size:.66rem;color:var(--muted);}
-
-/* signal badge */
-.badge{
-  display:inline-flex;align-items:center;gap:5px;
-  font-size:.58rem;font-weight:700;
-  padding:3px 9px;letter-spacing:.08em;
-  white-space:nowrap;
-}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:.58rem;font-weight:700;padding:3px 9px;letter-spacing:.08em;white-space:nowrap;}
 .badge.VAH{background:rgba(255,94,58,.1);color:var(--vah);border:1px solid rgba(255,94,58,.28);}
 .badge.VAL{background:rgba(0,255,178,.07);color:var(--val);border:1px solid rgba(0,255,178,.22);}
 .badge.POC{background:rgba(255,215,0,.07);color:var(--poc);border:1px solid rgba(255,215,0,.22);}
-
-/* TF badge */
-.tf-tag{
-  font-size:.6rem;padding:2px 8px;letter-spacing:.12em;
-  border:1px solid var(--border2);
-  color:var(--acc2);background:rgba(0,191,255,.05);
-}
-
-/* strength */
+.tf-tag{font-size:.6rem;padding:2px 8px;letter-spacing:.12em;border:1px solid var(--border2);color:var(--acc2);background:rgba(0,191,255,.05);}
 .str-wrap{display:flex;align-items:center;gap:6px;justify-content:flex-end;}
-.bar-bg{width:48px;height:3px;background:var(--border2);position:relative;overflow:hidden;}
+.bar-bg{width:48px;height:3px;background:var(--border2);}
 .bar-fg{height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc));}
 .str-n{font-size:.6rem;color:var(--acc);width:30px;text-align:right;}
-
-/* empty */
-.empty{
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:90px 20px;gap:12px;
-}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:90px 20px;gap:12px;}
 .empty-ico{font-size:2.8rem;opacity:.15;}
 .empty-txt{font-size:.7rem;color:var(--muted);letter-spacing:.12em;text-align:center;line-height:1.9;}
-
-/* skeleton */
-.skel-row{
-  display:grid;
-  grid-template-columns:52px 1fr 100px 100px 100px 100px 120px 80px 90px;
-  padding:11px 18px;
-  border-bottom:1px solid rgba(19,36,53,.8);
-  align-items:center;gap:0;
-}
-.skel{
-  height:13px;border-radius:2px;margin-right:10px;
-  background:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%);
-  background-size:200% 100%;
-  animation:shim 1.5s infinite;
-}
+.skel-row{display:grid;grid-template-columns:52px 1fr 100px 100px 100px 100px 120px 80px 90px;padding:11px 18px;border-bottom:1px solid rgba(19,36,53,.8);align-items:center;}
+.skel{height:13px;border-radius:2px;margin-right:10px;background:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%);background-size:200% 100%;animation:shim 1.5s infinite;}
 @keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
-
-/* progress bar */
-.prog-wrap{
-  display:none;
-  align-items:center;gap:10px;
-  padding:8px 18px;
-  background:var(--s2);
-  border-bottom:1px solid var(--border);
-  font-size:.62rem;color:var(--muted);
-  letter-spacing:.1em;
-}
+.prog-wrap{display:none;align-items:center;gap:10px;padding:8px 18px;background:var(--s2);border-bottom:1px solid var(--border);font-size:.62rem;color:var(--muted);letter-spacing:.1em;}
 .prog-wrap.show{display:flex;}
 .prog-bg{flex:1;height:3px;background:var(--border2);}
 .prog-fg{height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc));transition:width .3s ease;}
-
-/* footer */
-footer{
-  margin-top:28px;padding-top:14px;
-  border-top:1px solid var(--border);
-  display:flex;justify-content:space-between;
-  align-items:center;flex-wrap:wrap;gap:10px;
-}
+footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
 .foot-note{font-size:.56rem;color:var(--muted);letter-spacing:.1em;}
 .legend{display:flex;gap:18px;flex-wrap:wrap;}
 .leg-item{display:flex;align-items:center;gap:6px;font-size:.57rem;color:var(--muted);}
 .leg-dot{width:8px;height:8px;border-radius:50%;}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--s2);border:1px solid var(--vah);color:var(--vah);font-size:.65rem;letter-spacing:.1em;padding:10px 18px;z-index:999;display:none;}
+.click-hint{font-size:.55rem;color:var(--muted);letter-spacing:.1em;text-align:right;padding:6px 18px;border-bottom:1px solid var(--border);}
 
-/* error toast */
-.toast{
-  position:fixed;bottom:24px;right:24px;
-  background:var(--s2);border:1px solid var(--vah);
-  color:var(--vah);font-size:.65rem;letter-spacing:.1em;
-  padding:10px 18px;z-index:999;
-  animation:fadeUp .3s ease both;
-  display:none;
+/* ── CHART MODAL ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.85);
+  z-index:100;
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
 }
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--s1);
+  border:1px solid var(--border2);
+  width:95vw;max-width:900px;
+  max-height:92vh;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px));
+}
+.modal-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;
+  background:var(--s2);
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;gap:10px;
+}
+.modal-title{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:1.1rem;color:#fff;letter-spacing:.1em;
+}
+.modal-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.modal-close{
+  background:transparent;border:1px solid var(--border2);
+  color:var(--muted);font-size:1rem;
+  width:30px;height:30px;cursor:pointer;
+  display:grid;place-items:center;
+  transition:all .2s;
+}
+.modal-close:hover{border-color:var(--vah);color:var(--vah);}
+.modal-body{flex:1;overflow:auto;padding:16px;}
+.chart-area{position:relative;width:100%;}
+canvas#vpChart{width:100%!important;display:block;}
+.vp-legend{
+  display:flex;gap:16px;flex-wrap:wrap;
+  padding:10px 0 0;
+  font-size:.6rem;letter-spacing:.1em;
+}
+.vp-leg-item{display:flex;align-items:center;gap:6px;}
+.vp-leg-line{width:24px;height:2px;}
+.levels-row{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:10px;margin-top:12px;
+}
+.level-box{
+  background:var(--s2);border:1px solid var(--border);
+  padding:10px 14px;
+}
+.level-box-lbl{font-size:.55rem;color:var(--muted);letter-spacing:.15em;margin-bottom:4px;}
+.level-box-val{font-size:.85rem;font-weight:700;}
+.chart-loading{display:flex;align-items:center;justify-content:center;height:300px;font-size:.7rem;color:var(--muted);letter-spacing:.1em;}
 
-/* Responsive */
 @media(max-width:1050px){
-  .tbl-head,.row,.skel-row{
-    grid-template-columns:44px 1fr 85px 120px 72px 82px;
-  }
+  .tbl-head,.row,.skel-row{grid-template-columns:44px 1fr 85px 120px 72px 82px;}
   .th:nth-child(4),.th:nth-child(5),.th:nth-child(9),
   .td:nth-child(4),.td:nth-child(5),.td:nth-child(9),
   .skel-row div:nth-child(4),.skel-row div:nth-child(5),.skel-row div:nth-child(9){display:none;}
 }
 @media(max-width:640px){
-  .tbl-head,.row,.skel-row{
-    grid-template-columns:36px 1fr 76px 120px 70px;
-  }
+  .tbl-head,.row,.skel-row{grid-template-columns:36px 1fr 76px 120px 70px;}
   .th:nth-child(4),.th:nth-child(5),.th:nth-child(6),.th:nth-child(9),
   .td:nth-child(4),.td:nth-child(5),.td:nth-child(6),.td:nth-child(9),
   .skel-row div:nth-child(4),.skel-row div:nth-child(5),
   .skel-row div:nth-child(6),.skel-row div:nth-child(9){display:none;}
+  .levels-row{grid-template-columns:1fr;}
 }
 </style>
 </head>
 <body>
 <div class="app">
-
-<!-- HEADER -->
 <header>
   <div class="logo">
     <div class="logo-mark">
@@ -393,7 +199,6 @@ footer{
   </div>
 </header>
 
-<!-- CONTROLS -->
 <div class="controls">
   <span class="ctl-label">TF:</span>
   <button class="tf-btn on" data-tf="30m" onclick="togTF(this)">30M</button>
@@ -410,273 +215,326 @@ footer{
   <span id="sigCount" style="font-size:.62rem;color:var(--muted);letter-spacing:.12em;">— SIGNALS</span>
 </div>
 
-<!-- STATS -->
 <div class="stats">
-  <div class="stat" style="--c:var(--acc2);--rgb:0,191,255">
-    <div class="stat-lbl">COINS SCANNED</div>
-    <div class="stat-val" id="stScanned">—</div>
-  </div>
-  <div class="stat" style="--c:var(--vah);--rgb:255,94,58">
-    <div class="stat-lbl">VAH BREAKS</div>
-    <div class="stat-val" id="stVAH">—</div>
-  </div>
-  <div class="stat" style="--c:var(--val);--rgb:0,255,178">
-    <div class="stat-lbl">VAL RECLAIMS</div>
-    <div class="stat-val" id="stVAL">—</div>
-  </div>
-  <div class="stat" style="--c:var(--poc);--rgb:255,215,0">
-    <div class="stat-lbl">POC REACTIONS</div>
-    <div class="stat-val" id="stPOC">—</div>
-  </div>
-  <div class="stat" style="--c:var(--warn);--rgb:255,184,0">
-    <div class="stat-lbl">TOTAL SIGNALS</div>
-    <div class="stat-val" id="stTotal">—</div>
-  </div>
+  <div class="stat" style="--c:var(--acc2)"><div class="stat-lbl">COINS SCANNED</div><div class="stat-val" id="stScanned">—</div></div>
+  <div class="stat" style="--c:var(--vah)"><div class="stat-lbl">VAH BREAKS</div><div class="stat-val" id="stVAH">—</div></div>
+  <div class="stat" style="--c:var(--val)"><div class="stat-lbl">VAL RECLAIMS</div><div class="stat-val" id="stVAL">—</div></div>
+  <div class="stat" style="--c:var(--poc)"><div class="stat-lbl">POC REACTIONS</div><div class="stat-val" id="stPOC">—</div></div>
+  <div class="stat" style="--c:var(--warn)"><div class="stat-lbl">TOTAL SIGNALS</div><div class="stat-val" id="stTotal">—</div></div>
 </div>
 
-<!-- TABLE -->
 <div class="tbl-wrap">
   <div class="tbl-head">
-    <div class="th">#</div>
-    <div class="th">COIN</div>
-    <div class="th">PRICE</div>
-    <div class="th">VAH</div>
-    <div class="th">VAL</div>
-    <div class="th">POC</div>
-    <div class="th">SIGNAL TYPE</div>
-    <div class="th">TF</div>
-    <div class="th">STRENGTH</div>
+    <div class="th">#</div><div class="th">COIN</div><div class="th">PRICE</div>
+    <div class="th">VAH</div><div class="th">VAL</div><div class="th">POC</div>
+    <div class="th">SIGNAL TYPE</div><div class="th">TF</div><div class="th">STRENGTH</div>
   </div>
-
-  <!-- Progress bar -->
+  <div class="click-hint">TAP ANY ROW TO VIEW CHART WITH VP LEVELS</div>
   <div class="prog-wrap" id="progWrap">
     <span id="progTxt">SCANNING…</span>
     <div class="prog-bg"><div class="prog-fg" id="progFg" style="width:0%"></div></div>
   </div>
-
   <div class="rows" id="rows">
     <div class="empty">
       <div class="empty-ico">◈</div>
-      <div class="empty-txt">
-        CLICK "SCAN NOW" TO FETCH LIVE BINANCE DATA<br>
-        AND SCREEN FOR VOLUME PROFILE BULLISH SIGNALS
+      <div class="empty-txt">CLICK "SCAN NOW" TO FETCH LIVE BINANCE DATA<br>AND SCREEN FOR VOLUME PROFILE BULLISH SIGNALS</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="foot-note">DATA: BINANCE API · VP LEVELS: 24-BIN · VALUE AREA: 70% · AUTO-REFRESH: 5 MIN · TAP ROW FOR CHART</div>
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--vah)"></div>VAH = Value Area High</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--val)"></div>VAL = Value Area Low</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--poc)"></div>POC = Point of Control</div>
+  </div>
+</footer>
+</div>
+
+<!-- CHART MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title" id="modalTitle">BTCUSDT</div>
+        <div class="modal-meta">
+          <span id="modalBadge" class="badge">—</span>
+          <span id="modalTF" class="tf-tag">—</span>
+          <span id="modalPrice" style="font-size:.7rem;color:#fff;">—</span>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="chart-area">
+        <div id="chartLoading" class="chart-loading">LOADING CHART DATA…</div>
+        <canvas id="vpChart" style="display:none;"></canvas>
+      </div>
+      <div class="vp-legend">
+        <div class="vp-leg-item"><div class="vp-leg-line" style="background:#FF5E3A"></div><span style="color:#FF5E3A">VAH — Value Area High</span></div>
+        <div class="vp-leg-item"><div class="vp-leg-line" style="background:#00FFB2"></div><span style="color:#00FFB2">VAL — Value Area Low</span></div>
+        <div class="vp-leg-item"><div class="vp-leg-line" style="background:#FFD700"></div><span style="color:#FFD700">POC — Point of Control</span></div>
+        <div class="vp-leg-item"><div class="vp-leg-line" style="background:rgba(0,255,178,.15);height:12px;border:1px solid rgba(0,255,178,.3)"></div><span style="color:var(--muted)">Value Area Zone</span></div>
+      </div>
+      <div class="levels-row">
+        <div class="level-box"><div class="level-box-lbl">VAH</div><div class="level-box-val" id="lvlVAH" style="color:#FF5E3A">—</div></div>
+        <div class="level-box"><div class="level-box-lbl">POC</div><div class="level-box-val" id="lvlPOC" style="color:#FFD700">—</div></div>
+        <div class="level-box"><div class="level-box-lbl">VAL</div><div class="level-box-val" id="lvlVAL" style="color:#00FFB2">—</div></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- FOOTER -->
-<footer>
-  <div class="foot-note">
-    DATA: BINANCE API (PROXIED VIA LOCAL NODE SERVER) · VP LEVELS: 24-BIN TPO · VALUE AREA: 70% · AUTO-REFRESH: 5 MIN
-  </div>
-  <div class="legend">
-    <div class="leg-item"><div class="leg-dot" style="background:var(--vah)"></div>VAH = Value Area High · Bullish Breakout Above</div>
-    <div class="leg-item"><div class="leg-dot" style="background:var(--val)"></div>VAL = Value Area Low · Bullish Reclaim</div>
-    <div class="leg-item"><div class="leg-dot" style="background:var(--poc)"></div>POC = Point of Control · Bullish Bounce</div>
-  </div>
-</footer>
-</div>
-
-<!-- Error toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ── State ────────────────────────────────────────────────────────
 let activeTFs  = new Set(['30m','1h','4h','12h','1d']);
 let activeSigs = new Set(['VAH','VAL','POC']);
 let allSignals = [];
 let refreshTimer = null;
+let chartInstance = null;
 
-// ── Format helpers ───────────────────────────────────────────────
 function fp(p) {
-  if (!p && p !== 0) return '—';
-  if (p >= 10000) return p.toLocaleString('en',{maximumFractionDigits:1});
-  if (p >= 1)     return p.toFixed(4);
+  if (!p && p!==0) return '—';
+  if (p>=10000) return p.toLocaleString('en',{maximumFractionDigits:1});
+  if (p>=1)     return p.toFixed(4);
   return p.toFixed(6);
 }
 
-// ── Toast ────────────────────────────────────────────────────────
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', 4000);
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.display='block';
+  setTimeout(()=>t.style.display='none',4000);
 }
 
-// ── Skeleton loader ──────────────────────────────────────────────
 function showSkeleton() {
-  document.getElementById('rows').innerHTML =
-    Array.from({length:10}).map(() => `
+  document.getElementById('rows').innerHTML=
+    Array.from({length:10}).map(()=>`
     <div class="skel-row">
-      <div class="skel" style="width:28px"></div>
-      <div class="skel" style="width:75px"></div>
-      <div class="skel" style="width:80px"></div>
-      <div class="skel" style="width:80px"></div>
-      <div class="skel" style="width:80px"></div>
-      <div class="skel" style="width:80px"></div>
-      <div class="skel" style="width:100px"></div>
-      <div class="skel" style="width:40px"></div>
+      <div class="skel" style="width:28px"></div><div class="skel" style="width:75px"></div>
+      <div class="skel" style="width:80px"></div><div class="skel" style="width:80px"></div>
+      <div class="skel" style="width:80px"></div><div class="skel" style="width:80px"></div>
+      <div class="skel" style="width:100px"></div><div class="skel" style="width:40px"></div>
       <div class="skel" style="width:65px"></div>
     </div>`).join('');
 }
 
-// ── Render signals ───────────────────────────────────────────────
 function render() {
-  const filtered = allSignals.filter(s =>
-    activeTFs.has(s.tf) && activeSigs.has(s.type)
-  );
-  filtered.sort((a,b) => b.strength - a.strength);
-
-  document.getElementById('stVAH').textContent   = allSignals.filter(s=>s.type==='VAH').length;
-  document.getElementById('stVAL').textContent   = allSignals.filter(s=>s.type==='VAL').length;
-  document.getElementById('stPOC').textContent   = allSignals.filter(s=>s.type==='POC').length;
-  document.getElementById('stTotal').textContent = allSignals.length;
-  document.getElementById('sigCount').textContent = `${filtered.length} SIGNAL${filtered.length!==1?'S':''}`;
-
-  const rows = document.getElementById('rows');
-
-  if (filtered.length === 0) {
-    rows.innerHTML = `
-      <div class="empty">
-        <div class="empty-ico">◈</div>
-        <div class="empty-txt">NO SIGNALS MATCH CURRENT FILTERS<br>TRY ENABLING MORE TIMEFRAMES OR SIGNAL TYPES</div>
-      </div>`;
+  const filtered=allSignals.filter(s=>activeTFs.has(s.tf)&&activeSigs.has(s.type));
+  filtered.sort((a,b)=>b.strength-a.strength);
+  document.getElementById('stVAH').textContent=allSignals.filter(s=>s.type==='VAH').length;
+  document.getElementById('stVAL').textContent=allSignals.filter(s=>s.type==='VAL').length;
+  document.getElementById('stPOC').textContent=allSignals.filter(s=>s.type==='POC').length;
+  document.getElementById('stTotal').textContent=allSignals.length;
+  document.getElementById('sigCount').textContent=`${filtered.length} SIGNAL${filtered.length!==1?'S':''}`;
+  const rows=document.getElementById('rows');
+  if(filtered.length===0){
+    rows.innerHTML=`<div class="empty"><div class="empty-ico">◈</div><div class="empty-txt">NO SIGNALS MATCH CURRENT FILTERS<br>TRY ENABLING MORE TIMEFRAMES OR SIGNAL TYPES</div></div>`;
     return;
   }
-
-  rows.innerHTML = filtered.map((s, i) => {
-    const sym = s.symbol.replace('USDT','');
-    const badgeLabel = s.type==='VAH' ? '▲ VAH BREAK' : s.type==='VAL' ? '▼ VAL RECLAIM' : '◆ POC REACT';
+  rows.innerHTML=filtered.map((s,i)=>{
+    const sym=s.symbol.replace('USDT','');
+    const bl=s.type==='VAH'?'▲ VAH BREAK':s.type==='VAL'?'▼ VAL RECLAIM':'◆ POC REACT';
     return `
-    <div class="row" style="animation-delay:${i*30}ms">
+    <div class="row" style="animation-delay:${i*30}ms" onclick="openChart('${s.symbol}','${s.tf}','${s.type}',${JSON.stringify(s.vp).replace(/"/g,"'")})">
       <div class="td rank">${i+1}</div>
-      <div class="td">
-        <div class="coin">
-          <div class="sym">${sym}</div>
-          <div class="pair">${s.symbol}</div>
-        </div>
-      </div>
+      <div class="td"><div class="coin"><div class="sym">${sym}</div><div class="pair">${s.symbol}</div></div></div>
       <div class="td price">$${fp(s.price)}</div>
       <div class="td lvl">$${fp(s.vp.vah)}</div>
       <div class="td lvl">$${fp(s.vp.val)}</div>
       <div class="td lvl">$${fp(s.vp.poc)}</div>
-      <div class="td"><span class="badge ${s.type}">${badgeLabel}</span></div>
+      <div class="td"><span class="badge ${s.type}">${bl}</span></div>
       <div class="td"><span class="tf-tag">${s.tf.toUpperCase()}</span></div>
-      <div class="td">
-        <div class="str-wrap">
-          <div class="bar-bg"><div class="bar-fg" style="width:${s.strength}%"></div></div>
-          <div class="str-n">${s.strength}%</div>
-        </div>
-      </div>
+      <div class="td"><div class="str-wrap"><div class="bar-bg"><div class="bar-fg" style="width:${s.strength}%"></div></div><div class="str-n">${s.strength}%</div></div></div>
     </div>`;
   }).join('');
 }
 
-// ── Main scan (calls local Node server) ──────────────────────────
 async function runScan() {
-  const btn  = document.getElementById('scanBtn');
-  const icon = document.getElementById('scanIcon');
-  const prog = document.getElementById('progWrap');
-  const pfg  = document.getElementById('progFg');
-  const ptxt = document.getElementById('progTxt');
-
-  btn.disabled = true;
-  icon.className = 'spin';
-  icon.textContent = '◌';
-  prog.classList.add('show');
-  pfg.style.width = '5%';
-  ptxt.textContent = 'CONNECTING TO SERVER…';
-  showSkeleton();
-
-  // Animate progress bar while waiting
-  let fake = 5;
-  const fakeTimer = setInterval(() => {
-    fake = Math.min(fake + 2, 88);
-    pfg.style.width = fake + '%';
-  }, 400);
-
+  const btn=document.getElementById('scanBtn');
+  const icon=document.getElementById('scanIcon');
+  const prog=document.getElementById('progWrap');
+  const pfg=document.getElementById('progFg');
+  const ptxt=document.getElementById('progTxt');
+  btn.disabled=true;icon.className='spin';icon.textContent='◌';
+  prog.classList.add('show');pfg.style.width='5%';
+  ptxt.textContent='CONNECTING TO SERVER…';showSkeleton();
+  let fake=5;
+  const fakeTimer=setInterval(()=>{fake=Math.min(fake+2,88);pfg.style.width=fake+'%';},400);
   try {
-    ptxt.textContent = 'FETCHING BINANCE DATA…';
-    const res = await fetch('/api/scan');
-    if (!res.ok) throw new Error(`Server returned ${res.status}`);
-    const data = await res.json();
-
-    clearInterval(fakeTimer);
-    pfg.style.width = '100%';
-
-    allSignals = data.signals || [];
-    document.getElementById('stScanned').textContent = data.scanned || 0;
-    document.getElementById('scanTime').textContent =
-      'LAST SCAN: ' + new Date(data.ts).toLocaleTimeString('en-GB');
-
+    ptxt.textContent='FETCHING BINANCE DATA…';
+    const res=await fetch('/api/scan');
+    if(!res.ok) throw new Error(`Server returned ${res.status}`);
+    const data=await res.json();
+    clearInterval(fakeTimer);pfg.style.width='100%';
+    allSignals=data.signals||[];
+    document.getElementById('stScanned').textContent=data.scanned||0;
+    document.getElementById('scanTime').textContent='LAST SCAN: '+new Date(data.ts).toLocaleTimeString('en-GB');
     render();
-
-    if (data.errors && data.errors.length > 0) {
-      console.warn('Scan errors:', data.errors);
-    }
-
   } catch(e) {
-    clearInterval(fakeTimer);
-    pfg.style.width = '0%';
-    console.error(e);
-    showToast('⚠ Cannot reach server — is Node running? (node server.js)');
-    document.getElementById('rows').innerHTML = `
-      <div class="empty">
-        <div class="empty-ico">⚠</div>
-        <div class="empty-txt" style="color:var(--vah)">
-          SERVER NOT REACHABLE<br>
-          MAKE SURE NODE IS RUNNING:<br><br>
-          <span style="color:var(--acc2);font-size:.8rem">node server.js</span>
-        </div>
-      </div>`;
+    clearInterval(fakeTimer);pfg.style.width='0%';
+    showToast('⚠ Server error — try again');
+    document.getElementById('rows').innerHTML=`<div class="empty"><div class="empty-ico">⚠</div><div class="empty-txt" style="color:var(--vah)">SERVER NOT REACHABLE</div></div>`;
   }
-
-  setTimeout(() => prog.classList.remove('show'), 600);
-  btn.disabled = false;
-  icon.className = '';
-  icon.textContent = '⟳';
+  setTimeout(()=>prog.classList.remove('show'),600);
+  btn.disabled=false;icon.className='';icon.textContent='⟳';
 }
 
-// ── Toggle filters ────────────────────────────────────────────────
-function togTF(el) {
-  const tf = el.dataset.tf;
-  if (activeTFs.has(tf)) {
-    if (activeTFs.size === 1) return;
-    activeTFs.delete(tf);
-    el.classList.remove('on');
-  } else {
-    activeTFs.add(tf);
-    el.classList.add('on');
+// ── CHART ─────────────────────────────────────────────────────────
+async function openChart(symbol, tf, sigType, vp) {
+  const overlay=document.getElementById('modalOverlay');
+  const loading=document.getElementById('chartLoading');
+  const canvas=document.getElementById('vpChart');
+  
+  // Set modal header
+  document.getElementById('modalTitle').textContent=symbol;
+  const bl=sigType==='VAH'?'▲ VAH BREAK':sigType==='VAL'?'▼ VAL RECLAIM':'◆ POC REACT';
+  const badge=document.getElementById('modalBadge');
+  badge.textContent=bl;badge.className=`badge ${sigType}`;
+  document.getElementById('modalTF').textContent=tf.toUpperCase();
+  document.getElementById('modalPrice').textContent='';
+  document.getElementById('lvlVAH').textContent='$'+fp(vp.vah);
+  document.getElementById('lvlVAL').textContent='$'+fp(vp.val);
+  document.getElementById('lvlPOC').textContent='$'+fp(vp.poc);
+
+  overlay.classList.add('open');
+  loading.style.display='flex';
+  canvas.style.display='none';
+
+  if(chartInstance){chartInstance.destroy();chartInstance=null;}
+
+  try {
+    const res=await fetch(`/api/candles?symbol=${symbol}&interval=${tf}`);
+    const data=await res.json();
+    if(!data.ok) throw new Error(data.error);
+    
+    const candles=data.candles;
+    const vp2=data.vp||vp;
+    const last=candles[candles.length-1];
+    document.getElementById('modalPrice').textContent='$'+fp(last.close);
+
+    drawChart(canvas, candles, vp2, sigType);
+    loading.style.display='none';
+    canvas.style.display='block';
+  } catch(e) {
+    loading.textContent='ERROR LOADING CHART: '+e.message;
   }
+}
+
+function drawChart(canvas, candles, vp, sigType) {
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth;
+  const H=Math.min(360, window.innerHeight*0.4);
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const PAD={top:20,right:70,bottom:30,left:10};
+  const cW=W-PAD.left-PAD.right;
+  const cH=H-PAD.top-PAD.bottom;
+
+  // Price range with padding
+  let lo=Infinity,hi=-Infinity;
+  candles.forEach(c=>{if(c.high>hi)hi=c.high;if(c.low<lo)lo=c.low;});
+  // include VP levels in range
+  lo=Math.min(lo,vp.val*0.999);
+  hi=Math.max(hi,vp.vah*1.001);
+  const range=hi-lo;
+  const py=price=>PAD.top+cH-(((price-lo)/range)*cH);
+  const cw=Math.max(2,cW/candles.length-1);
+  const cx=i=>PAD.left+(i+0.5)*(cW/candles.length);
+
+  // Background
+  ctx.fillStyle='#080F18';ctx.fillRect(0,0,W,H);
+
+  // Value Area fill
+  const vahY=py(vp.vah);const valY=py(vp.val);
+  ctx.fillStyle='rgba(0,255,178,0.06)';
+  ctx.fillRect(PAD.left,vahY,cW,valY-vahY);
+
+  // Grid lines
+  ctx.strokeStyle='rgba(30,58,85,0.5)';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=PAD.top+(cH/4)*i;
+    ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+cW,y);ctx.stroke();
+    const price=hi-(range/4)*i;
+    ctx.fillStyle='rgba(58,104,128,0.7)';ctx.font=`${9*dpr/dpr}px monospace`;
+    ctx.textAlign='left';
+    ctx.fillText('$'+fp(price),PAD.left+cW+4,y+4);
+  }
+
+  // Candles
+  candles.forEach((c,i)=>{
+    const x=cx(i);const half=Math.max(1,cw/2-0.5);
+    const oY=py(c.open);const cY=py(c.close);
+    const hY=py(c.high);const lY=py(c.low);
+    const bull=c.close>=c.open;
+    const col=bull?'#00FFB2':'#FF5E3A';
+    // Wick
+    ctx.strokeStyle=col;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x,hY);ctx.lineTo(x,lY);ctx.stroke();
+    // Body
+    ctx.fillStyle=bull?'rgba(0,255,178,0.8)':'rgba(255,94,58,0.8)';
+    const bodyTop=Math.min(oY,cY);const bodyH=Math.max(1,Math.abs(oY-cY));
+    ctx.fillRect(x-half,bodyTop,half*2,bodyH);
+  });
+
+  // VP Level lines
+  const drawLine=(price,color,label,dash)=>{
+    const y=py(price);
+    ctx.strokeStyle=color;ctx.lineWidth=1.5;
+    ctx.setLineDash(dash||[]);
+    ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+cW,y);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=color;ctx.font=`bold ${10*dpr/dpr}px monospace`;
+    ctx.textAlign='left';
+    ctx.fillText(label,PAD.left+cW+4,y+4);
+  };
+
+  drawLine(vp.vah,'#FF5E3A','VAH',[4,3]);
+  drawLine(vp.poc,'#FFD700','POC',[4,3]);
+  drawLine(vp.val,'#00FFB2','VAL',[4,3]);
+
+  // Signal arrow on last candle
+  const last=candles[candles.length-1];
+  const lx=cx(candles.length-1);
+  ctx.fillStyle= sigType==='VAH'?'#FF5E3A':sigType==='VAL'?'#00FFB2':'#FFD700';
+  ctx.font=`bold ${14*dpr/dpr}px monospace`;
+  ctx.textAlign='center';
+  if(sigType==='VAH'){
+    ctx.fillText('▲',lx,py(last.high)-8);
+  } else if(sigType==='VAL'){
+    ctx.fillText('▼',lx,py(last.low)+16);
+  } else {
+    ctx.fillText('◆',lx,py(vp.poc)-10);
+  }
+}
+
+function closeModal(e) {
+  if(e&&e.target!==document.getElementById('modalOverlay')) return;
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function togTF(el) {
+  const tf=el.dataset.tf;
+  if(activeTFs.has(tf)){if(activeTFs.size===1)return;activeTFs.delete(tf);el.classList.remove('on');}
+  else{activeTFs.add(tf);el.classList.add('on');}
   render();
 }
 
 function togSig(el) {
-  const sig = el.dataset.sig;
-  const cls = `on-${sig.toLowerCase()}`;
-  if (activeSigs.has(sig)) {
-    if (activeSigs.size === 1) return;
-    activeSigs.delete(sig);
-    el.classList.remove(cls);
-  } else {
-    activeSigs.add(sig);
-    el.classList.add(cls);
-  }
+  const sig=el.dataset.sig;const cls=`on-${sig.toLowerCase()}`;
+  if(activeSigs.has(sig)){if(activeSigs.size===1)return;activeSigs.delete(sig);el.classList.remove(cls);}
+  else{activeSigs.add(sig);el.classList.add(cls);}
   render();
 }
 
-// ── Auto-refresh every 5 min ──────────────────────────────────────
-function startRefresh() {
-  clearInterval(refreshTimer);
-  refreshTimer = setInterval(runScan, 5 * 60 * 1000);
-}
+function startRefresh(){clearInterval(refreshTimer);refreshTimer=setInterval(runScan,5*60*1000);}
 
-// ── Init ──────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  runScan();
-  startRefresh();
-});
+window.addEventListener('DOMContentLoaded',()=>{runScan();startRefresh();});
+window.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('modalOverlay').classList.remove('open');});
 </script>
 </body>
 </html>
