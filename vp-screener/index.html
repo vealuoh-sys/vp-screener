@@ -598,7 +598,7 @@ async function runScan() {
 
   try {
     ptxt.textContent = 'FETCHING BINANCE DATA…';
-    const res = await fetch('http://localhost:4000/api/scan');
+    const res = await fetch('/api/scan');
     if (!res.ok) throw new Error(`Server returned ${res.status}`);
     const data = await res.json();
 
