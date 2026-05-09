@@ -10,7 +10,7 @@ const fs    = require('fs');
 const path  = require('path');
 const url   = require('url');
 
-const PORT = process.env.PORT||4000;
+const PORT = process.env.PORT||3000;
 
 // ── Top Binance USDT pairs to scan ──────────────────────────────
 const SCAN_PAIRS = [
