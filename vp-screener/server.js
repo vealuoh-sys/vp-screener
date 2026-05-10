@@ -46,78 +46,93 @@ function alertSignal(sig) {
   alertedSignals.add(key);
   const emoji = sig.type==='VAH'?'🚀':sig.type==='VAL'?'🟢':'🎯';
   const label = sig.type==='VAH'?'VAH BREAK ▲':sig.type==='VAL'?'VAL RECLAIM ▼':'POC REACT ◆';
-  const msg = `${emoji} <b>VP SIGNAL</b>
-
-<b>${sig.symbol}</b> — ${label}
-⏱ TF: <b>${sig.tf.toUpperCase()}</b>
-💰 Price: <b>$${sig.price.toFixed(6)}</b>
-
-📊 Levels:
-🔴 VAH: $${sig.vp.vah.toFixed(6)}
-🟡 POC: $${sig.vp.poc.toFixed(6)}
-🟢 VAL: $${sig.vp.val.toFixed(6)}
-💪 Strength: ${sig.strength}%
-
-🌐 vp-screener.up.railway.app`;
+  const msg = `${emoji} <b>VP SIGNAL</b>\n\n<b>${sig.symbol}</b> — ${label}\n⏱ TF: <b>${sig.tf.toUpperCase()}</b>\n💰 Price: <b>$${sig.price.toFixed(6)}</b>\n\n📊 Levels:\n🔴 VAH: $${sig.vp.vah.toFixed(6)}\n🟡 POC: $${sig.vp.poc.toFixed(6)}\n🟢 VAL: $${sig.vp.val.toFixed(6)}\n💪 Strength: ${sig.strength}%\n\n🌐 vp-screener.up.railway.app`;
   sendTelegram(msg).catch(console.error);
 }
 
-// ── Direct Binance fetch using multiple fallback hosts ────────────
-function fetchDirect(reqPath) {
-  const hosts = ['api1.binance.com','api2.binance.com','api3.binance.com','api.binance.com'];
-  
-  function tryHost(idx) {
-    if (idx >= hosts.length) return Promise.reject(new Error('All hosts failed'));
+// ── Binance fetch — tries multiple endpoints including futures & data CDN ──
+function fetchBinance(reqPath) {
+  // Priority order: data.binance.com (CDN, least restricted), then spot mirrors
+  const endpoints = [
+    { hostname: 'data-api.binance.vision', path: reqPath },          // Public data CDN (no geo-block)
+    { hostname: 'api.binance.com',          path: reqPath },          // Primary spot
+    { hostname: 'api1.binance.com',         path: reqPath },          // Spot mirror 1
+    { hostname: 'api2.binance.com',         path: reqPath },          // Spot mirror 2
+    { hostname: 'api3.binance.com',         path: reqPath },          // Spot mirror 3
+    { hostname: 'api4.binance.com',         path: reqPath },          // Spot mirror 4
+  ];
+
+  function tryEndpoint(idx) {
+    if (idx >= endpoints.length) return Promise.reject(new Error('All Binance endpoints failed'));
+    const ep = endpoints[idx];
     return new Promise((resolve, reject) => {
       const options = {
-        hostname: hosts[idx],
-        path: reqPath,
+        hostname: ep.hostname,
+        path: ep.path,
         method: 'GET',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'User-Agent': 'Mozilla/5.0 (compatible; VPScreener/1.0)',
           'Accept': 'application/json',
-          'Accept-Encoding': 'gzip, deflate, br',
           'Connection': 'keep-alive'
         },
-        timeout: 12000
+        timeout: 15000
       };
+
       const req = https.request(options, (res) => {
         const chunks = [];
+        // Handle gzip if needed
         res.on('data', chunk => chunks.push(chunk));
         res.on('end', () => {
           try {
-            const data = Buffer.concat(chunks).toString();
-            const parsed = JSON.parse(data);
-            if (Array.isArray(parsed)) {
+            const raw = Buffer.concat(chunks).toString('utf8');
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              console.log(`[OK-HOST] ${ep.hostname}`);
               resolve(parsed);
+            } else if (parsed && parsed.code) {
+              // Binance error response
+              console.log(`[WARN] ${ep.hostname} error: ${parsed.msg}`);
+              tryEndpoint(idx + 1).then(resolve).catch(reject);
             } else {
-              tryHost(idx + 1).then(resolve).catch(reject);
+              tryEndpoint(idx + 1).then(resolve).catch(reject);
             }
           } catch(e) {
-            tryHost(idx + 1).then(resolve).catch(reject);
+            console.log(`[WARN] ${ep.hostname} parse error: ${e.message}`);
+            tryEndpoint(idx + 1).then(resolve).catch(reject);
           }
         });
       });
-      req.on('timeout', () => { req.destroy(); tryHost(idx + 1).then(resolve).catch(reject); });
-      req.on('error', () => tryHost(idx + 1).then(resolve).catch(reject));
+
+      req.on('timeout', () => {
+        req.destroy();
+        console.log(`[TIMEOUT] ${ep.hostname}`);
+        tryEndpoint(idx + 1).then(resolve).catch(reject);
+      });
+
+      req.on('error', (err) => {
+        console.log(`[ERR] ${ep.hostname}: ${err.message}`);
+        tryEndpoint(idx + 1).then(resolve).catch(reject);
+      });
+
       req.end();
     });
   }
-  
-  return tryHost(0);
+
+  return tryEndpoint(0);
 }
 
 async function fetchKlines(symbol, interval, limit) {
   limit = limit || 100;
+  // /api/v3/klines works on data-api.binance.vision too
   const reqPath = `/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-  const raw = await fetchDirect(reqPath);
+  const raw = await fetchBinance(reqPath);
   return raw.map(k => ({
-    time: parseInt(k[0]),
-    open: parseFloat(k[1]),
-    high: parseFloat(k[2]),
-    low: parseFloat(k[3]),
-    close: parseFloat(k[4]),
-    volume: parseFloat(k[5]),
+    time:    parseInt(k[0]),
+    open:    parseFloat(k[1]),
+    high:    parseFloat(k[2]),
+    low:     parseFloat(k[3]),
+    close:   parseFloat(k[4]),
+    volume:  parseFloat(k[5]),
     typical: (parseFloat(k[2]) + parseFloat(k[3]) + parseFloat(k[4])) / 3
   }));
 }
@@ -128,10 +143,11 @@ function calcVolumeProfile(candles) {
   let lo = Infinity, hi = -Infinity;
   candles.forEach(c => {
     if (c.high > hi) hi = c.high;
-    if (c.low < lo) lo = c.low;
+    if (c.low  < lo) lo = c.low;
   });
   const range = hi - lo;
   if (range === 0) return null;
+
   const BINS = 24;
   const binSize = range / BINS;
   const vol = new Array(BINS).fill(0);
@@ -139,36 +155,45 @@ function calcVolumeProfile(candles) {
     const idx = Math.min(Math.floor((c.typical - lo) / binSize), BINS - 1);
     vol[idx] += c.volume;
   });
+
   let pocIdx = 0;
   vol.forEach((v, i) => { if (v > vol[pocIdx]) pocIdx = i; });
   const poc = lo + (pocIdx + 0.5) * binSize;
+
   const totalVol = vol.reduce((a, b) => a + b, 0);
   const target = totalVol * 0.70;
   let vaVol = vol[pocIdx], vaLo = pocIdx, vaHi = pocIdx;
   while (vaVol < target) {
-    const nextLo = vaLo > 0 ? vol[vaLo - 1] : 0;
-    const nextHi = vaHi < BINS - 1 ? vol[vaHi + 1] : 0;
+    const nextLo = vaLo > 0       ? vol[vaLo - 1] : 0;
+    const nextHi = vaHi < BINS-1  ? vol[vaHi + 1] : 0;
     if (nextLo >= nextHi && vaLo > 0) { vaLo--; vaVol += nextLo; }
-    else if (vaHi < BINS - 1) { vaHi++; vaVol += nextHi; }
+    else if (vaHi < BINS - 1)         { vaHi++; vaVol += nextHi; }
     else break;
   }
-  return { poc, vah: lo + (vaHi + 1) * binSize, val: lo + vaLo * binSize, hi, lo };
+  return {
+    poc,
+    vah: lo + (vaHi + 1) * binSize,
+    val: lo + vaLo * binSize,
+    hi, lo
+  };
 }
 
 function detectSignals(symbol, candles, tf) {
   const vp = calcVolumeProfile(candles);
   if (!vp) return [];
-  const cur = candles[candles.length - 1];
+  const cur  = candles[candles.length - 1];
   const prev = candles[candles.length - 2];
   const price = cur.close;
   const signals = [];
   const pct = (a, b) => Math.abs(a - b) / (b || 1) * 100;
+
   if (prev.close <= vp.vah && cur.close > vp.vah)
-    signals.push({ symbol, type: 'VAH', price, vp, strength: Math.min(100, Math.round(55 + pct(price, vp.vah) * 3)), tf });
+    signals.push({ symbol, type:'VAH', price, vp, strength: Math.min(100, Math.round(55 + pct(price, vp.vah)*3)), tf });
   if (prev.close < vp.val && cur.close >= vp.val && cur.close < vp.vah)
-    signals.push({ symbol, type: 'VAL', price, vp, strength: Math.min(100, Math.round(50 + pct(price, vp.val) * 5)), tf });
+    signals.push({ symbol, type:'VAL', price, vp, strength: Math.min(100, Math.round(50 + pct(price, vp.val)*5)), tf });
   if (cur.low <= vp.poc * 1.003 && cur.close > vp.poc && prev.close <= vp.poc * 1.004)
-    signals.push({ symbol, type: 'POC', price, vp, strength: Math.min(100, Math.round(48 + pct(price, vp.poc) * 6)), tf });
+    signals.push({ symbol, type:'POC', price, vp, strength: Math.min(100, Math.round(48 + pct(price, vp.poc)*6)), tf });
+
   return signals;
 }
 
@@ -186,7 +211,8 @@ async function runBackgroundScan() {
   for (const sym of SCAN_PAIRS) for (const tf of tfs) jobs.push({ sym, tf });
 
   console.log(`[SCAN START] ${jobs.length} jobs`);
-  const CONCURRENCY = 5;
+
+  const CONCURRENCY = 3; // Lowered to reduce rate-limit risk
   for (let i = 0; i < jobs.length; i += CONCURRENCY) {
     const batch = jobs.slice(i, i + CONCURRENCY);
     await Promise.allSettled(batch.map(async ({ sym, tf }) => {
@@ -201,7 +227,7 @@ async function runBackgroundScan() {
         console.log(`[WARN] ${sym}/${tf}: ${e.message}`);
       }
     }));
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise(r => setTimeout(r, 500)); // Small delay between batches
   }
 
   scanCache = { signals: allSignals, scanned, ts: new Date().toISOString() };
@@ -210,10 +236,12 @@ async function runBackgroundScan() {
   sendTelegram(`📊 <b>Scan Complete</b>\n${scanned} coins scanned\n🔔 ${allSignals.length} signals found!`).catch(()=>{});
 }
 
+// ── HTTP Server ───────────────────────────────────────────────────
 const server = http.createServer(async (req, res) => {
   setCORS(res);
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
-  const parsed = url.parse(req.url, true);
+
+  const parsed   = url.parse(req.url, true);
   const pathname = parsed.pathname;
 
   if (pathname === '/' || pathname === '/index.html') {
@@ -225,16 +253,20 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/api/scan') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ ok: true, scanned: scanCache.scanned, signals: scanCache.signals, ts: scanCache.ts || new Date().toISOString() }));
-    return;
+    return res.end(JSON.stringify({
+      ok: true,
+      scanned:  scanCache.scanned,
+      signals:  scanCache.signals,
+      ts:       scanCache.ts || new Date().toISOString()
+    }));
   }
 
   if (pathname === '/api/candles') {
-    const symbol = (parsed.query.symbol || 'BTCUSDT').toUpperCase();
-    const interval = parsed.query.interval || '1h';
+    const symbol   = (parsed.query.symbol   || 'BTCUSDT').toUpperCase();
+    const interval = parsed.query.interval  || '1h';
     try {
       const candles = await fetchKlines(symbol, interval, 100);
-      const vp = calcVolumeProfile(candles);
+      const vp      = calcVolumeProfile(candles);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: true, symbol, interval, candles, vp }));
     } catch(e) {
@@ -245,15 +277,17 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ ok: true, cached: scanCache.scanned }));
+    return res.end(JSON.stringify({ ok: true, cached: scanCache.scanned, ts: scanCache.ts }));
   }
 
-  res.writeHead(404); res.end('Not found');
+  res.writeHead(404);
+  res.end('Not found');
 });
 
 server.listen(PORT, HOST, () => {
   console.log(`VP SCREENER running on ${HOST}:${PORT}`);
-  sendTelegram('🟢 <b>VP SCREENER ONLINE</b>\nDirect Binance connection. Scanning 50 coins...').catch(()=>{});
+  sendTelegram('🟢 <b>VP SCREENER ONLINE</b>\nConnecting via data-api.binance.vision...')
+    .catch(()=>{});
   setTimeout(() => runBackgroundScan().catch(console.error), 3000);
   setInterval(() => runBackgroundScan().catch(console.error), 30 * 60 * 1000);
 });
