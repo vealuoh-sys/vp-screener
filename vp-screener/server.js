@@ -81,14 +81,14 @@ function alertSignal(sig) {
 // ── Fetch via allorigins proxy (bypasses Binance IP block) ────────
 function fetchViaProxy(binanceUrl) {
   return new Promise((resolve, reject) => {
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(binanceUrl)}`;
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(binanceUrl)}`;
     const req = https.get(proxyUrl, {
       headers: { 'User-Agent': 'Mozilla/5.0' }
     }, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
-        try { resolve(JSON.parse(data)); }
+        try { const d=JSON.parse(data); resolve(d.contents ? JSON.parse(d.contents) : d); }
         catch(e) { reject(new Error('JSON parse error')); }
       });
     });
