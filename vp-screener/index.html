@@ -669,12 +669,19 @@ function buildLWChart(candles, vp) {
 
   const mainEl = document.getElementById('mainChart');
   const volEl  = document.getElementById('volChart');
-  const mainH  = Math.max(240, window.innerHeight * 0.38);
+  const mainH  = Math.max(280, window.innerHeight * 0.40);
+  const vpW    = window.innerWidth > 640 ? 112 : 0;
+  const modal  = document.querySelector('.modal');
+  const modalW = modal ? modal.getBoundingClientRect().width : window.innerWidth * 0.95;
+  const mainW  = Math.max(300, Math.floor(modalW - vpW - 4));
+
   mainEl.style.height = mainH + 'px';
+  mainEl.style.width  = mainW + 'px';
+  volEl.style.width   = mainW + 'px';
 
   // ── Main candlestick chart ────────────────────────────────────
   mainChartObj = LightweightCharts.createChart(mainEl, {
-    width:  mainEl.clientWidth,
+    width:  mainW,
     height: mainH,
     layout: {
       background: { color: '#080F18' },
@@ -794,7 +801,7 @@ function buildLWChart(candles, vp) {
 
   // ── Volume chart ──────────────────────────────────────────────
   const volChart = LightweightCharts.createChart(volEl, {
-    width:  volEl.clientWidth,
+    width:  mainW,
     height: 80,
     layout: { background: { color: '#080F18' }, textColor: '#3A6880', fontFamily: "'Space Mono', monospace", fontSize: 9 },
     grid:   { vertLines: { color: 'rgba(19,36,53,0.4)' }, horzLines: { visible: false } },
@@ -867,7 +874,16 @@ function startRefresh(){ clearInterval(refreshTimer); refreshTimer=setInterval(r
 window.addEventListener('DOMContentLoaded', () => { runScan(); startRefresh(); });
 window.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
 window.addEventListener('resize', () => {
-  if (mainChartObj) mainChartObj.applyOptions({ width: document.getElementById('mainChart').clientWidth });
+  if (!mainChartObj) return;
+  const modal = document.querySelector('.modal');
+  const modalW = modal ? modal.getBoundingClientRect().width : window.innerWidth * 0.95;
+  const vpW = window.innerWidth > 640 ? 112 : 0;
+  const mainW = Math.max(300, Math.floor(modalW - vpW - 4));
+  const mainEl = document.getElementById('mainChart');
+  const volEl  = document.getElementById('volChart');
+  mainEl.style.width = mainW + 'px';
+  volEl.style.width  = mainW + 'px';
+  mainChartObj.applyOptions({ width: mainW });
 });
 </script>
 </body>
