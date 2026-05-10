@@ -6,89 +6,84 @@ const url = require('url');
 
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
-const TD_KEY = 'ab77d587bb6d4d6082a53394420848d3';
-const TG_TOKEN = '8792428538:AAEEVMRVjeR7PytpTeSDG m3morZQ20QGaEw'.replace(' ','');
+const TG_TOKEN = '8792428538:AAEEVMRVjeR7PytpTeSDGm3morZQ20QGaEw';
 const TG_CHAT = '8137954593';
 
 const SCAN_PAIRS = [
-  'BTC/USD','ETH/USD','BNB/USD','SOL/USD','XRP/USD',
-  'ADA/USD','AVAX/USD','DOGE/USD','DOT/USD','MATIC/USD',
-  'LINK/USD','ATOM/USD','LTC/USD','UNI/USD','AAVE/USD',
-  'NEAR/USD','FIL/USD','ARB/USD','OP/USD','INJ/USD',
-  'SUI/USD','APT/USD','TIA/USD','FET/USD','RUNE/USD',
-  'STX/USD','IMX/USD','SAND/USD','MANA/USD','AXS/USD',
-  'FTM/USD','ALGO/USD','GALA/USD','APE/USD','GMT/USD',
-  'EGLD/USD','CRV/USD','MKR/USD','SNX/USD','COMP/USD',
-  'YFI/USD','SUSHI/USD','GRT/USD','ENS/USD','LDO/USD',
-  'RPL/USD','BAL/USD','DYDX/USD','GMX/USD','CAKE/USD',
-  'XLM/USD','VET/USD','HBAR/USD','ICP/USD','ETC/USD',
-  'XMR/USD','BCH/USD','ZEC/USD','DASH/USD','NEO/USD',
-  'ZIL/USD','ANKR/USD','CHZ/USD','MINA/USD','FLOW/USD',
-  'ROSE/USD','KSM/USD','ZRX/USD','BAT/USD','NMR/USD',
-  'BLUR/USD','MAGIC/USD','SSV/USD','WOO/USD','CRO/USD',
-  'OKB/USD','HT/USD','KCS/USD','LEO/USD','QNT/USD',
-  'RNDR/USD','OCEAN/USD','FXS/USD','CVX/USD','PERP/USD',
-  'REN/USD','GNO/USD','BAND/USD','RSR/USD','ORN/USD',
-  'ALPHA/USD','BADGER/USD','BNT/USD','MLN/USD','POND/USD'
+  'BTCUSDT','ETHUSDT','BNBUSDT','SOLUSDT','XRPUSDT',
+  'ADAUSDT','AVAXUSDT','DOGEUSDT','DOTUSDT','MATICUSDT',
+  'LINKUSDT','ATOMUSDT','LTCUSDT','UNIUSDT','AAVEUSDT',
+  'NEARUSDT','FILUSDT','ARBUSDT','OPUSDT','INJUSDT',
+  'SUIUSDT','APTUSDT','TIAUSDT','FETUSDT','RUNEUSDT',
+  'STXUSDT','IMXUSDT','SANDUSDT','MANAUSDT','AXSUSDT',
+  'FTMUSDT','ALGOUSDT','GALAUSDT','APEUSDT','GMTUSDT',
+  'EGLDUSDT','CRVUSDT','MKRUSDT','SNXUSDT','COMPUSDT',
+  'YFIUSDT','SUSHIUSDT','GRTUSDT','ENSUSDT','LDOUSDT',
+  'DYDXUSDT','GMXUSDT','CAKEUSDT','XLMUSDT','VETUSDT',
+  'HBARUSDT','ICPUSDT','ETCUSDT','XMRUSDT','BCHUSDT',
+  'ZECUSDT','NEOUSDT','ZILUSDT','ANKRUSDT','CHZUSDT',
+  'MINAUSDT','FLOWUSDT','ROSEUSDT','KSMUSDT','ZRXUSDT',
+  'BATUSDT','NMRUSDT','BLURUSDT','MAGICUSDT','WOOUSDT',
+  'CROUSDT','QNTUSDT','RENDERUSDT','OCEANUSDT','FXSUSDT',
+  'CVXUSDT','RENUSDT','BANDUSDT','RSRUSDT','ALPHAUSDT',
+  'BNTUSDT','MLNUSDT','LRCUSDT','STORJUSDT','TRUUSDT',
+  'CELOUSDT','SKLUSDT','FETUSDT','AGLDUSDT','API3USDT',
+  'IOTAUSDT','ONTUSDT','WAVESUSDT','RVNUSDT','SCUSDT',
+  'DGBUSDT','XEMUSDT','LSKUSDT','ARKUSDT','IOSTUSDT'
 ];
 
 const TF_MAP = {
+  '30m': '30m',
   '1h': '1h',
-  '4h': '4h'
+  '4h': '4h',
+  '12h': '12h',
+  '1d': '1d'
 };
 
 let scanCache = { signals: [], scanned: 0, ts: null };
-let lastAlertedSignals = new Set();
+let alertedSignals = new Set();
 
-// ── Telegram alert ────────────────────────────────────────────────
+// ── Telegram ──────────────────────────────────────────────────────
 function sendTelegram(message) {
   return new Promise((resolve) => {
     const text = encodeURIComponent(message);
     const reqUrl = `https://api.telegram.org/bot${TG_TOKEN}/sendMessage?chat_id=${TG_CHAT}&text=${text}&parse_mode=HTML`;
     https.get(reqUrl, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        console.log('[TG]', data.substring(0, 80));
-        resolve();
-      });
-    }).on('error', (e) => {
-      console.log('[TG ERROR]', e.message);
-      resolve();
-    });
+      let d = '';
+      res.on('data', c => d += c);
+      res.on('end', () => { console.log('[TG]', d.slice(0,60)); resolve(); });
+    }).on('error', (e) => { console.log('[TG ERR]', e.message); resolve(); });
   });
 }
 
-function alertSignal(signal) {
-  const key = `${signal.symbol}-${signal.type}-${signal.tf}`;
-  if (lastAlertedSignals.has(key)) return; // don't repeat same signal
-  lastAlertedSignals.add(key);
+function alertSignal(sig) {
+  const key = `${sig.symbol}-${sig.type}-${sig.tf}`;
+  if (alertedSignals.has(key)) return;
+  alertedSignals.add(key);
+  const emoji = sig.type==='VAH'?'🚀':sig.type==='VAL'?'🟢':'🎯';
+  const label = sig.type==='VAH'?'VAH BREAK ▲':sig.type==='VAL'?'VAL RECLAIM ▼':'POC REACT ◆';
+  const msg = `${emoji} <b>VP SIGNAL</b>
 
-  const emoji = signal.type === 'VAH' ? '🚀' : signal.type === 'VAL' ? '🟢' : '🎯';
-  const label = signal.type === 'VAH' ? 'VAH BREAK ▲' : signal.type === 'VAL' ? 'VAL RECLAIM ▼' : 'POC REACT ◆';
+<b>${sig.symbol}</b> — ${label}
+⏱ TF: <b>${sig.tf.toUpperCase()}</b>
+💰 Price: <b>$${sig.price.toFixed(6)}</b>
 
-  const msg = `${emoji} <b>VP SIGNAL ALERT</b>
+📊 Levels:
+🔴 VAH: $${sig.vp.vah.toFixed(6)}
+🟡 POC: $${sig.vp.poc.toFixed(6)}
+🟢 VAL: $${sig.vp.val.toFixed(6)}
+💪 Strength: ${sig.strength}%
 
-<b>${signal.symbol}</b> — ${label}
-⏱ Timeframe: <b>${signal.tf.toUpperCase()}</b>
-💰 Price: <b>$${signal.price.toFixed(6)}</b>
-
-📊 VP Levels:
-🔴 VAH: $${signal.vp.vah.toFixed(6)}
-🟡 POC: $${signal.vp.poc.toFixed(6)}
-🟢 VAL: $${signal.vp.val.toFixed(6)}
-
-💪 Strength: ${signal.strength}%
 🌐 vp-screener.up.railway.app`;
-
   sendTelegram(msg).catch(console.error);
 }
 
-// ── HTTP helper ───────────────────────────────────────────────────
-function httpsGet(reqUrl) {
+// ── Fetch via allorigins proxy (bypasses Binance IP block) ────────
+function fetchViaProxy(binanceUrl) {
   return new Promise((resolve, reject) => {
-    const req = https.get(reqUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(binanceUrl)}`;
+    const req = https.get(proxyUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0' }
     }, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
@@ -97,28 +92,28 @@ function httpsGet(reqUrl) {
         catch(e) { reject(new Error('JSON parse error')); }
       });
     });
-    req.setTimeout(10000, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.setTimeout(15000, () => { req.destroy(); reject(new Error('Timeout')); });
     req.on('error', reject);
   });
 }
 
 async function fetchKlines(symbol, interval, limit) {
-  limit = limit || 60;
-  const reqUrl = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=${interval}&outputsize=${limit}&apikey=${TD_KEY}&format=JSON`;
-  const raw = await httpsGet(reqUrl);
-  if (!raw || !raw.values || !Array.isArray(raw.values))
-    throw new Error(raw && raw.message ? raw.message : 'Bad response');
-  return raw.values.reverse().map(k => ({
-    time: new Date(k.datetime).getTime(),
-    open: parseFloat(k.open),
-    high: parseFloat(k.high),
-    low: parseFloat(k.low),
-    close: parseFloat(k.close),
-    volume: parseFloat(k.volume || 0),
-    typical: (parseFloat(k.high) + parseFloat(k.low) + parseFloat(k.close)) / 3
+  limit = limit || 100;
+  const binanceUrl = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+  const raw = await fetchViaProxy(binanceUrl);
+  if (!Array.isArray(raw)) throw new Error('Bad response');
+  return raw.map(k => ({
+    time: parseInt(k[0]),
+    open: parseFloat(k[1]),
+    high: parseFloat(k[2]),
+    low: parseFloat(k[3]),
+    close: parseFloat(k[4]),
+    volume: parseFloat(k[5]),
+    typical: (parseFloat(k[2]) + parseFloat(k[3]) + parseFloat(k[4])) / 3
   }));
 }
 
+// ── Volume Profile ────────────────────────────────────────────────
 function calcVolumeProfile(candles) {
   if (!candles || candles.length < 10) return null;
   let lo = Infinity, hi = -Infinity;
@@ -133,7 +128,7 @@ function calcVolumeProfile(candles) {
   const vol = new Array(BINS).fill(0);
   candles.forEach(c => {
     const idx = Math.min(Math.floor((c.typical - lo) / binSize), BINS - 1);
-    vol[idx] += (c.volume > 0 ? c.volume : 1);
+    vol[idx] += c.volume;
   });
   let pocIdx = 0;
   vol.forEach((v, i) => { if (v > vol[pocIdx]) pocIdx = i; });
@@ -159,13 +154,12 @@ function detectSignals(symbol, candles, tf) {
   const price = cur.close;
   const signals = [];
   const pct = (a, b) => Math.abs(a - b) / (b || 1) * 100;
-  const sym = symbol.replace('/','') + 'T';
   if (prev.close <= vp.vah && cur.close > vp.vah)
-    signals.push({ symbol: sym, type: 'VAH', price, vp, strength: Math.min(100, Math.round(55 + pct(price, vp.vah) * 3)), tf });
+    signals.push({ symbol, type: 'VAH', price, vp, strength: Math.min(100, Math.round(55 + pct(price, vp.vah) * 3)), tf });
   if (prev.close < vp.val && cur.close >= vp.val && cur.close < vp.vah)
-    signals.push({ symbol: sym, type: 'VAL', price, vp, strength: Math.min(100, Math.round(50 + pct(price, vp.val) * 5)), tf });
+    signals.push({ symbol, type: 'VAL', price, vp, strength: Math.min(100, Math.round(50 + pct(price, vp.val) * 5)), tf });
   if (cur.low <= vp.poc * 1.003 && cur.close > vp.poc && prev.close <= vp.poc * 1.004)
-    signals.push({ symbol: sym, type: 'POC', price, vp, strength: Math.min(100, Math.round(48 + pct(price, vp.poc) * 6)), tf });
+    signals.push({ symbol, type: 'POC', price, vp, strength: Math.min(100, Math.round(48 + pct(price, vp.poc) * 6)), tf });
   return signals;
 }
 
@@ -175,33 +169,44 @@ function setCORS(res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
+// ── Background scan ───────────────────────────────────────────────
 async function runBackgroundScan() {
+  const tfs = Object.keys(TF_MAP);
   const allSignals = [];
   let scanned = 0;
+  const jobs = [];
+  for (const sym of SCAN_PAIRS) for (const tf of tfs) jobs.push({ sym, tf });
 
-  for (const sym of SCAN_PAIRS) {
-    for (const tf of Object.keys(TF_MAP)) {
+  console.log(`[SCAN START] ${jobs.length} jobs`);
+  const CONCURRENCY = 8;
+  for (let i = 0; i < jobs.length; i += CONCURRENCY) {
+    const batch = jobs.slice(i, i + CONCURRENCY);
+    await Promise.allSettled(batch.map(async ({ sym, tf }) => {
       try {
-        const candles = await fetchKlines(sym, TF_MAP[tf], 60);
+        const candles = await fetchKlines(sym, TF_MAP[tf], 100);
         const sigs = detectSignals(sym, candles, tf);
-        sigs.forEach(s => alertSignal(s)); // send Telegram alert
+        sigs.forEach(s => alertSignal(s));
         allSignals.push(...sigs);
         scanned++;
-        console.log(`[OK] ${sym}/${tf}`);
       } catch(e) {
         console.log(`[WARN] ${sym}/${tf}: ${e.message}`);
       }
-      await new Promise(r => setTimeout(r, 8000));
-    }
+    }));
+    await new Promise(r => setTimeout(r, 500));
   }
 
   scanCache = { signals: allSignals, scanned, ts: new Date().toISOString() };
+  alertedSignals.clear();
   console.log(`[SCAN DONE] ${scanned} scanned, ${allSignals.length} signals`);
 
-  // Clear alerted signals after each full scan so new ones can alert again
-  lastAlertedSignals.clear();
+  if (allSignals.length === 0) {
+    sendTelegram('📊 <b>Scan Complete</b>\n' + scanned + ' coins scanned\nNo signals found right now.').catch(()=>{});
+  } else {
+    sendTelegram(`📊 <b>Scan Complete</b>\n${scanned} coins scanned\n🔔 ${allSignals.length} signals found!`).catch(()=>{});
+  }
 }
 
+// ── Server ────────────────────────────────────────────────────────
 const server = http.createServer(async (req, res) => {
   setCORS(res);
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
@@ -227,11 +232,10 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/candles') {
-    const symbol = parsed.query.symbol || 'BTC/USD';
+    const symbol = (parsed.query.symbol || 'BTCUSDT').toUpperCase();
     const interval = parsed.query.interval || '1h';
-    const tdInterval = TF_MAP[interval] || '1h';
     try {
-      const candles = await fetchKlines(symbol, tdInterval, 100);
+      const candles = await fetchKlines(symbol, interval, 100);
       const vp = calcVolumeProfile(candles);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: true, symbol, interval, candles, vp }));
@@ -251,8 +255,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`VP SCREENER running on ${HOST}:${PORT}`);
-  // Send startup message
-  sendTelegram('🟢 <b>VP SCREENER ONLINE</b>\nServer started. First scan beginning now...').catch(console.error);
+  sendTelegram('🟢 <b>VP SCREENER ONLINE</b>\nServer started! Scanning 100 coins on 5 timeframes...\n⏳ Results in ~2 minutes').catch(()=>{});
   setTimeout(() => runBackgroundScan().catch(console.error), 3000);
-  setInterval(() => runBackgroundScan().catch(console.error), 3 * 60 * 60 * 1000);
+  setInterval(() => runBackgroundScan().catch(console.error), 30 * 60 * 1000);
 });
