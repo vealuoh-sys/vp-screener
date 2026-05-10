@@ -405,8 +405,7 @@ async function openChart(symbol, tf, sigType, vp) {
   if(chartInstance){chartInstance.destroy();chartInstance=null;}
 
   try {
-   const tdSymbol = symbol.replace('USDT','/USD').replace('BUSD','/USD');
- const res=await fetch(`/api/candles?symbol=${tdSymbol}&interval=${tf}`);
+ const res=await fetch(`/api/candles?symbol=${symbol}&interval=${tf}`);
     const data=await res.json();
     if(!data.ok) throw new Error(data.error);
     
