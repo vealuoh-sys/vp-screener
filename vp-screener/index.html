@@ -645,10 +645,13 @@ async function loadChartData(symbol, tf, vpHint) {
     const distPct = ((last.close - vp.poc) / vp.poc * 100).toFixed(2);
     document.getElementById('infoDist').textContent = (distPct >= 0 ? '+' : '') + distPct + '%';
 
-    // Show containers
+    // Show containers — wait ONE paint frame so browser calculates
+    // clientWidth before LightweightCharts reads it (fixes blank chart)
     document.getElementById('chartLoadingState').style.display = 'none';
     document.getElementById('chartContainer').style.display    = 'flex';
     document.getElementById('chartInfoBar').style.display      = 'grid';
+
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
     // Build Lightweight Chart
     buildLWChart(candles, vp);
