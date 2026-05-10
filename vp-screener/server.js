@@ -19,26 +19,10 @@ const SCAN_PAIRS = [
   'FTMUSDT','ALGOUSDT','GALAUSDT','APEUSDT','GMTUSDT',
   'EGLDUSDT','CRVUSDT','MKRUSDT','SNXUSDT','COMPUSDT',
   'YFIUSDT','SUSHIUSDT','GRTUSDT','ENSUSDT','LDOUSDT',
-  'DYDXUSDT','GMXUSDT','CAKEUSDT','XLMUSDT','VETUSDT',
-  'HBARUSDT','ICPUSDT','ETCUSDT','XMRUSDT','BCHUSDT',
-  'ZECUSDT','NEOUSDT','ZILUSDT','ANKRUSDT','CHZUSDT',
-  'MINAUSDT','FLOWUSDT','ROSEUSDT','KSMUSDT','ZRXUSDT',
-  'BATUSDT','NMRUSDT','BLURUSDT','MAGICUSDT','WOOUSDT',
-  'CROUSDT','QNTUSDT','RENDERUSDT','OCEANUSDT','FXSUSDT',
-  'CVXUSDT','RENUSDT','BANDUSDT','RSRUSDT','ALPHAUSDT',
-  'BNTUSDT','MLNUSDT','LRCUSDT','STORJUSDT','TRUUSDT',
-  'CELOUSDT','SKLUSDT','FETUSDT','AGLDUSDT','API3USDT',
-  'IOTAUSDT','ONTUSDT','WAVESUSDT','RVNUSDT','SCUSDT',
-  'DGBUSDT','XEMUSDT','LSKUSDT','ARKUSDT','IOSTUSDT'
+  'DYDXUSDT','GMXUSDT','CAKEUSDT','XLMUSDT','VETUSDT'
 ];
 
-const TF_MAP = {
-  '30m': '30m',
-  '1h': '1h',
-  '4h': '4h',
-  '12h': '12h',
-  '1d': '1d'
-};
+const TF_MAP = { '1h':'1h','4h':'4h','1d':'1d' };
 
 let scanCache = { signals: [], scanned: 0, ts: null };
 let alertedSignals = new Set();
@@ -51,8 +35,8 @@ function sendTelegram(message) {
     https.get(reqUrl, (res) => {
       let d = '';
       res.on('data', c => d += c);
-      res.on('end', () => { console.log('[TG]', d.slice(0,60)); resolve(); });
-    }).on('error', (e) => { console.log('[TG ERR]', e.message); resolve(); });
+      res.on('end', () => resolve());
+    }).on('error', () => resolve());
   });
 }
 
@@ -78,30 +62,55 @@ function alertSignal(sig) {
   sendTelegram(msg).catch(console.error);
 }
 
-// ── Fetch via allorigins proxy (bypasses Binance IP block) ────────
-function fetchViaProxy(binanceUrl) {
-  return new Promise((resolve, reject) => {
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(binanceUrl)}`;
-    const req = https.get(proxyUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0' }
-    }, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try { const d=JSON.parse(data); resolve(d.contents ? JSON.parse(d.contents) : d); }
-        catch(e) { reject(new Error('JSON parse error')); }
+// ── Direct Binance fetch using multiple fallback hosts ────────────
+function fetchDirect(reqPath) {
+  const hosts = ['api1.binance.com','api2.binance.com','api3.binance.com','api.binance.com'];
+  
+  function tryHost(idx) {
+    if (idx >= hosts.length) return Promise.reject(new Error('All hosts failed'));
+    return new Promise((resolve, reject) => {
+      const options = {
+        hostname: hosts[idx],
+        path: reqPath,
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'application/json',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive'
+        },
+        timeout: 12000
+      };
+      const req = https.request(options, (res) => {
+        const chunks = [];
+        res.on('data', chunk => chunks.push(chunk));
+        res.on('end', () => {
+          try {
+            const data = Buffer.concat(chunks).toString();
+            const parsed = JSON.parse(data);
+            if (Array.isArray(parsed)) {
+              resolve(parsed);
+            } else {
+              tryHost(idx + 1).then(resolve).catch(reject);
+            }
+          } catch(e) {
+            tryHost(idx + 1).then(resolve).catch(reject);
+          }
+        });
       });
+      req.on('timeout', () => { req.destroy(); tryHost(idx + 1).then(resolve).catch(reject); });
+      req.on('error', () => tryHost(idx + 1).then(resolve).catch(reject));
+      req.end();
     });
-    req.setTimeout(15000, () => { req.destroy(); reject(new Error('Timeout')); });
-    req.on('error', reject);
-  });
+  }
+  
+  return tryHost(0);
 }
 
 async function fetchKlines(symbol, interval, limit) {
   limit = limit || 100;
-  const binanceUrl = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-  const raw = await fetchViaProxy(binanceUrl);
-  if (!Array.isArray(raw)) throw new Error('Bad response');
+  const reqPath = `/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+  const raw = await fetchDirect(reqPath);
   return raw.map(k => ({
     time: parseInt(k[0]),
     open: parseFloat(k[1]),
@@ -169,7 +178,6 @@ function setCORS(res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
-// ── Background scan ───────────────────────────────────────────────
 async function runBackgroundScan() {
   const tfs = Object.keys(TF_MAP);
   const allSignals = [];
@@ -178,7 +186,7 @@ async function runBackgroundScan() {
   for (const sym of SCAN_PAIRS) for (const tf of tfs) jobs.push({ sym, tf });
 
   console.log(`[SCAN START] ${jobs.length} jobs`);
-  const CONCURRENCY = 8;
+  const CONCURRENCY = 5;
   for (let i = 0; i < jobs.length; i += CONCURRENCY) {
     const batch = jobs.slice(i, i + CONCURRENCY);
     await Promise.allSettled(batch.map(async ({ sym, tf }) => {
@@ -188,25 +196,20 @@ async function runBackgroundScan() {
         sigs.forEach(s => alertSignal(s));
         allSignals.push(...sigs);
         scanned++;
+        console.log(`[OK] ${sym}/${tf}`);
       } catch(e) {
         console.log(`[WARN] ${sym}/${tf}: ${e.message}`);
       }
     }));
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 300));
   }
 
   scanCache = { signals: allSignals, scanned, ts: new Date().toISOString() };
   alertedSignals.clear();
   console.log(`[SCAN DONE] ${scanned} scanned, ${allSignals.length} signals`);
-
-  if (allSignals.length === 0) {
-    sendTelegram('📊 <b>Scan Complete</b>\n' + scanned + ' coins scanned\nNo signals found right now.').catch(()=>{});
-  } else {
-    sendTelegram(`📊 <b>Scan Complete</b>\n${scanned} coins scanned\n🔔 ${allSignals.length} signals found!`).catch(()=>{});
-  }
+  sendTelegram(`📊 <b>Scan Complete</b>\n${scanned} coins scanned\n🔔 ${allSignals.length} signals found!`).catch(()=>{});
 }
 
-// ── Server ────────────────────────────────────────────────────────
 const server = http.createServer(async (req, res) => {
   setCORS(res);
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
@@ -222,12 +225,7 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/api/scan') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      ok: true,
-      scanned: scanCache.scanned,
-      signals: scanCache.signals,
-      ts: scanCache.ts || new Date().toISOString()
-    }));
+    res.end(JSON.stringify({ ok: true, scanned: scanCache.scanned, signals: scanCache.signals, ts: scanCache.ts || new Date().toISOString() }));
     return;
   }
 
@@ -255,7 +253,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`VP SCREENER running on ${HOST}:${PORT}`);
-  sendTelegram('🟢 <b>VP SCREENER ONLINE</b>\nServer started! Scanning 100 coins on 5 timeframes...\n⏳ Results in ~2 minutes').catch(()=>{});
+  sendTelegram('🟢 <b>VP SCREENER ONLINE</b>\nDirect Binance connection. Scanning 50 coins...').catch(()=>{});
   setTimeout(() => runBackgroundScan().catch(console.error), 3000);
   setInterval(() => runBackgroundScan().catch(console.error), 30 * 60 * 1000);
 });
