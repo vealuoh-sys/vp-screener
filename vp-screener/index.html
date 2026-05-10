@@ -663,8 +663,9 @@ async function loadChartData(symbol, tf, vpHint) {
   }
 }
 
+
+
 function buildLWChart(candles, vp) {
-  // Destroy previous
   if (mainChartObj) { mainChartObj.remove(); mainChartObj = null; }
 
   const mainEl = document.getElementById('mainChart');
@@ -759,10 +760,57 @@ function buildLWChart(candles, vp) {
   pocLine.setData(makeFlat(vp.poc));
   valLine.setData(makeFlat(vp.val));
 
-  // Value area shaded band (price line markers)
-  candleSeries.createPriceLine({ price: vp.vah, color: '#FF5E3A', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'VAH' });
-  candleSeries.createPriceLine({ price: vp.poc, color: '#FFD700', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'POC' });
-  candleSeries.createPriceLine({ price: vp.val, color: '#00FFB2', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'VAL' });
+  // Price lines for VAH/POC/VAL (visible on right axis)
+  candleSeries.createPriceLine({ price: vp.vah, color: '#FF5E3A', lineWidth: 2, lineStyle: 2, axisLabelVisible: true, title: '◀ VAH' });
+  candleSeries.createPriceLine({ price: vp.poc, color: '#FFD700', lineWidth: 2, lineStyle: 2, axisLabelVisible: true, title: '◀ POC' });
+  candleSeries.createPriceLine({ price: vp.val, color: '#00FFB2', lineWidth: 2, lineStyle: 2, axisLabelVisible: true, title: '◀ VAL' });
+
+  // ── VP Range boundary markers ─────────────────────────────────
+  // Show vertical lines at start and end of VP calculation range
+  const vpStartTime = lwCandles[0].time;
+  const vpEndTime   = lwCandles[lwCandles.length - 1].time;
+
+  // Left boundary — where VP calculation STARTS
+  const vpStartLine = mainChartObj.addLineSeries({
+    color: 'rgba(0,191,255,0.5)',
+    lineWidth: 1,
+    lineStyle: LightweightCharts.LineStyle.Dashed,
+    priceLineVisible: false,
+    lastValueVisible: false,
+    crosshairMarkerVisible: false,
+    title: '◀ VP START',
+  });
+  vpStartLine.setData([
+    { time: vpStartTime, value: vp.lo },
+    { time: vpStartTime, value: vp.hi },
+  ]);
+
+  // ── Value Area filled background band ─────────────────────────
+  // Draw a semi-transparent area between VAH and VAL using histogram series
+  const vaAreaSeries = mainChartObj.addHistogramSeries({
+    color: 'rgba(0,191,255,0.04)',
+    priceFormat: { type: 'price' },
+    priceScaleId: 'right',
+    lastValueVisible: false,
+    priceLineVisible: false,
+  });
+  // We simulate the band by drawing at VAH price with baseline at VAL
+  vaAreaSeries.setData(lwCandles.map(c => ({
+    time: c.time,
+    value: vp.vah,
+    color: 'rgba(0,191,255,0.04)',
+  })));
+
+  // Add a label showing VP calculation range
+  const rangeLabel = `VP RANGE: ${lwCandles.length} CANDLES`;
+  candleSeries.createPriceLine({
+    price: vp.hi,
+    color: 'rgba(0,191,255,0.3)',
+    lineWidth: 1,
+    lineStyle: LightweightCharts.LineStyle.Dotted,
+    axisLabelVisible: false,
+    title: rangeLabel,
+  });
 
   // Signal marker on last candle
   const last = lwCandles[lwCandles.length - 1];
@@ -891,7 +939,7 @@ window.addEventListener('resize', () => {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VP SCREENER — Binance Volume Profile</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lightweight-charts/4.1.3/lightweight-charts.standalone.production.js"></script>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 :root{
   --bg:#03080D;--s1:#080F18;--s2:#0C1A28;
@@ -1392,90 +1440,7 @@ async function runScan() {
 }
 
 // ─── Volume Profile Histogram (canvas sidebar) ────────────────────
-function drawVPHistogram(candles, vp) {
-  const canvas = document.getElementById('vpHistogram');
-  const wrap   = canvas.parentElement;
-  const dpr    = window.devicePixelRatio || 1;
-  const W      = wrap.clientWidth;
-  const H      = wrap.clientHeight;
-  if (W<=0 || H<=0) return;
 
-  canvas.width  = W * dpr;
-  canvas.height = H * dpr;
-  canvas.style.width  = W + 'px';
-  canvas.style.height = H + 'px';
-
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, W, H);
-
-  // Build bins
-  let lo = Infinity, hi = -Infinity;
-  candles.forEach(c => { if(c.high>hi) hi=c.high; if(c.low<lo) lo=c.low; });
-  const range = hi - lo;
-  if (range === 0) return;
-  const BINS = 28;
-  const binSize = range / BINS;
-  const vol = new Array(BINS).fill(0);
-  candles.forEach(c => {
-    const idx = Math.min(Math.floor((c.typical - lo) / binSize), BINS-1);
-    vol[idx] += c.volume;
-  });
-  const maxVol = Math.max(...vol);
-
-  // Price range from VP levels (with padding)
-  const pLo = Math.min(lo, vp.val * 0.999);
-  const pHi = Math.max(hi, vp.vah * 1.001);
-  const pRange = pHi - pLo;
-
-  const py = price => H - ((price - pLo) / pRange) * H;
-
-  // Value area fill
-  ctx.fillStyle = 'rgba(0,255,178,0.06)';
-  ctx.fillRect(0, py(vp.vah), W, py(vp.val) - py(vp.vah));
-
-  // Draw bars
-  vol.forEach((v, i) => {
-    const price = lo + (i + 0.5) * binSize;
-    const barH  = Math.max(1, (binSize / pRange) * H - 1);
-    const barW  = maxVol > 0 ? ((v / maxVol) * (W - 6)) : 0;
-    const y     = py(lo + (i + 1) * binSize);
-
-    // Color: POC = gold, value area = green tint, outside = blue tint
-    const isPOC = Math.abs(price - vp.poc) < binSize;
-    const inVA  = price >= vp.val && price <= vp.vah;
-
-    if (isPOC) {
-      ctx.fillStyle = 'rgba(255,215,0,0.85)';
-    } else if (inVA) {
-      ctx.fillStyle = 'rgba(0,255,178,0.5)';
-    } else {
-      ctx.fillStyle = 'rgba(0,191,255,0.28)';
-    }
-    ctx.fillRect(0, y, barW, barH);
-  });
-
-  // VAH line
-  ctx.strokeStyle = '#FF5E3A'; ctx.lineWidth = 1.5;
-  ctx.setLineDash([3,2]);
-  ctx.beginPath(); ctx.moveTo(0, py(vp.vah)); ctx.lineTo(W, py(vp.vah)); ctx.stroke();
-
-  // POC line
-  ctx.strokeStyle = '#FFD700';
-  ctx.beginPath(); ctx.moveTo(0, py(vp.poc)); ctx.lineTo(W, py(vp.poc)); ctx.stroke();
-
-  // VAL line
-  ctx.strokeStyle = '#00FFB2';
-  ctx.beginPath(); ctx.moveTo(0, py(vp.val)); ctx.lineTo(W, py(vp.val)); ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Labels
-  ctx.font = `bold ${9 * dpr / dpr}px monospace`;
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#FF5E3A'; ctx.fillText('VAH', 3, py(vp.vah) - 3);
-  ctx.fillStyle = '#FFD700'; ctx.fillText('POC', 3, py(vp.poc) - 3);
-  ctx.fillStyle = '#00FFB2'; ctx.fillText('VAL', 3, py(vp.val) + 11);
-}
 
 // ─── Chart Modal ──────────────────────────────────────────────────
 async function openChart(symbol, tf, sigType, vp) {
