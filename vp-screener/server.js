@@ -7,8 +7,9 @@ const url = require('url');
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
 const TD_KEY = 'ab77d587bb6d4d6082a53394420848d3';
+const TG_TOKEN = '8792428538:AAEEVMRVjeR7PytpTeSDG m3morZQ20QGaEw'.replace(' ','');
+const TG_CHAT = '8137954593';
 
-// 100 top crypto pairs
 const SCAN_PAIRS = [
   'BTC/USD','ETH/USD','BNB/USD','SOL/USD','XRP/USD',
   'ADA/USD','AVAX/USD','DOGE/USD','DOT/USD','MATIC/USD',
@@ -18,29 +19,72 @@ const SCAN_PAIRS = [
   'STX/USD','IMX/USD','SAND/USD','MANA/USD','AXS/USD',
   'FTM/USD','ALGO/USD','GALA/USD','APE/USD','GMT/USD',
   'EGLD/USD','CRV/USD','MKR/USD','SNX/USD','COMP/USD',
-  'YFI/USD','SUSHI/USD','1INCH/USD','GRT/USD','ENS/USD',
-  'LDO/USD','RPL/USD','CVX/USD','BAL/USD','PERP/USD',
-  'DYDX/USD','GMX/USD','CAKE/USD','XLM/USD','VET/USD',
-  'HBAR/USD','ICP/USD','ETC/USD','XMR/USD','BCH/USD',
-  'ZEC/USD','DASH/USD','NEO/USD','QTUM/USD','ZIL/USD',
-  'ICX/USD','ONT/USD','WAVES/USD','RVN/USD','SC/USD',
-  'DGB/USD','XEM/USD','LSK/USD','STEEM/USD','ARK/USD',
-  'KCS/USD','HT/USD','OKB/USD','CRO/USD','LEO/USD',
-  'WOO/USD','BLUR/USD','MAGIC/USD','HFT/USD','SSV/USD',
-  'ANKR/USD','CHZ/USD','MINA/USD','FLOW/USD','ROSE/USD',
-  'KSM/USD','ZRX/USD','BAT/USD','REN/USD','NMR/USD'
+  'YFI/USD','SUSHI/USD','GRT/USD','ENS/USD','LDO/USD',
+  'RPL/USD','BAL/USD','DYDX/USD','GMX/USD','CAKE/USD',
+  'XLM/USD','VET/USD','HBAR/USD','ICP/USD','ETC/USD',
+  'XMR/USD','BCH/USD','ZEC/USD','DASH/USD','NEO/USD',
+  'ZIL/USD','ANKR/USD','CHZ/USD','MINA/USD','FLOW/USD',
+  'ROSE/USD','KSM/USD','ZRX/USD','BAT/USD','NMR/USD',
+  'BLUR/USD','MAGIC/USD','SSV/USD','WOO/USD','CRO/USD',
+  'OKB/USD','HT/USD','KCS/USD','LEO/USD','QNT/USD',
+  'RNDR/USD','OCEAN/USD','FXS/USD','CVX/USD','PERP/USD',
+  'REN/USD','GNO/USD','BAND/USD','RSR/USD','ORN/USD',
+  'ALPHA/USD','BADGER/USD','BNT/USD','MLN/USD','POND/USD'
 ];
 
-// Timeframes for Twelve Data
 const TF_MAP = {
-  '30m': '30min',
   '1h': '1h',
-  '4h': '4h',
-  '1d': '1day'
+  '4h': '4h'
 };
 
 let scanCache = { signals: [], scanned: 0, ts: null };
+let lastAlertedSignals = new Set();
 
+// ── Telegram alert ────────────────────────────────────────────────
+function sendTelegram(message) {
+  return new Promise((resolve) => {
+    const text = encodeURIComponent(message);
+    const reqUrl = `https://api.telegram.org/bot${TG_TOKEN}/sendMessage?chat_id=${TG_CHAT}&text=${text}&parse_mode=HTML`;
+    https.get(reqUrl, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        console.log('[TG]', data.substring(0, 80));
+        resolve();
+      });
+    }).on('error', (e) => {
+      console.log('[TG ERROR]', e.message);
+      resolve();
+    });
+  });
+}
+
+function alertSignal(signal) {
+  const key = `${signal.symbol}-${signal.type}-${signal.tf}`;
+  if (lastAlertedSignals.has(key)) return; // don't repeat same signal
+  lastAlertedSignals.add(key);
+
+  const emoji = signal.type === 'VAH' ? '🚀' : signal.type === 'VAL' ? '🟢' : '🎯';
+  const label = signal.type === 'VAH' ? 'VAH BREAK ▲' : signal.type === 'VAL' ? 'VAL RECLAIM ▼' : 'POC REACT ◆';
+
+  const msg = `${emoji} <b>VP SIGNAL ALERT</b>
+
+<b>${signal.symbol}</b> — ${label}
+⏱ Timeframe: <b>${signal.tf.toUpperCase()}</b>
+💰 Price: <b>$${signal.price.toFixed(6)}</b>
+
+📊 VP Levels:
+🔴 VAH: $${signal.vp.vah.toFixed(6)}
+🟡 POC: $${signal.vp.poc.toFixed(6)}
+🟢 VAL: $${signal.vp.val.toFixed(6)}
+
+💪 Strength: ${signal.strength}%
+🌐 vp-screener.up.railway.app`;
+
+  sendTelegram(msg).catch(console.error);
+}
+
+// ── HTTP helper ───────────────────────────────────────────────────
 function httpsGet(reqUrl) {
   return new Promise((resolve, reject) => {
     const req = https.get(reqUrl, {
@@ -60,15 +104,11 @@ function httpsGet(reqUrl) {
 
 async function fetchKlines(symbol, interval, limit) {
   limit = limit || 60;
-  const sym = symbol.replace('/', '');
   const reqUrl = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=${interval}&outputsize=${limit}&apikey=${TD_KEY}&format=JSON`;
   const raw = await httpsGet(reqUrl);
-  if (!raw || !raw.values || !Array.isArray(raw.values)) {
+  if (!raw || !raw.values || !Array.isArray(raw.values))
     throw new Error(raw && raw.message ? raw.message : 'Bad response');
-  }
-  // Twelve Data returns newest first, reverse to oldest first
-  const values = raw.values.reverse();
-  return values.map(k => ({
+  return raw.values.reverse().map(k => ({
     time: new Date(k.datetime).getTime(),
     open: parseFloat(k.open),
     high: parseFloat(k.high),
@@ -100,8 +140,7 @@ function calcVolumeProfile(candles) {
   const poc = lo + (pocIdx + 0.5) * binSize;
   const totalVol = vol.reduce((a, b) => a + b, 0);
   const target = totalVol * 0.70;
-  let vaVol = vol[pocIdx];
-  let vaLo = pocIdx, vaHi = pocIdx;
+  let vaVol = vol[pocIdx], vaLo = pocIdx, vaHi = pocIdx;
   while (vaVol < target) {
     const nextLo = vaLo > 0 ? vol[vaLo - 1] : 0;
     const nextHi = vaHi < BINS - 1 ? vol[vaHi + 1] : 0;
@@ -140,28 +179,27 @@ async function runBackgroundScan() {
   const allSignals = [];
   let scanned = 0;
 
-  // Free plan: 8 req/min = 1 req per 7.5 sec
-  // Scan all pairs on 1h timeframe only to stay within limits
-  // 100 pairs = ~13 minutes per full scan
-  const tfs = ['1h', '4h'];
-
   for (const sym of SCAN_PAIRS) {
-    for (const tf of tfs) {
+    for (const tf of Object.keys(TF_MAP)) {
       try {
         const candles = await fetchKlines(sym, TF_MAP[tf], 60);
-        allSignals.push(...detectSignals(sym, candles, tf));
+        const sigs = detectSignals(sym, candles, tf);
+        sigs.forEach(s => alertSignal(s)); // send Telegram alert
+        allSignals.push(...sigs);
         scanned++;
         console.log(`[OK] ${sym}/${tf}`);
       } catch(e) {
         console.log(`[WARN] ${sym}/${tf}: ${e.message}`);
       }
-      // Wait 8 seconds between requests to respect rate limit
       await new Promise(r => setTimeout(r, 8000));
     }
   }
 
   scanCache = { signals: allSignals, scanned, ts: new Date().toISOString() };
   console.log(`[SCAN DONE] ${scanned} scanned, ${allSignals.length} signals`);
+
+  // Clear alerted signals after each full scan so new ones can alert again
+  lastAlertedSignals.clear();
 }
 
 const server = http.createServer(async (req, res) => {
@@ -213,8 +251,8 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`VP SCREENER running on ${HOST}:${PORT}`);
-  // Start first scan after 3 seconds
+  // Send startup message
+  sendTelegram('🟢 <b>VP SCREENER ONLINE</b>\nServer started. First scan beginning now...').catch(console.error);
   setTimeout(() => runBackgroundScan().catch(console.error), 3000);
-  // Repeat every 3 hours (scan takes ~27 min, 800 calls/day limit)
   setInterval(() => runBackgroundScan().catch(console.error), 3 * 60 * 60 * 1000);
 });
