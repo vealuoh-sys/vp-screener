@@ -139,61 +139,204 @@ async function fetchKlines(symbol, interval, limit) {
 
 // ── Volume Profile ────────────────────────────────────────────────
 function calcVolumeProfile(candles) {
-  if (!candles || candles.length < 10) return null;
+  if (!candles || candles.length < 50) return null;
+
   let lo = Infinity, hi = -Infinity;
+
   candles.forEach(c => {
     if (c.high > hi) hi = c.high;
-    if (c.low  < lo) lo = c.low;
+    if (c.low < lo) lo = c.low;
   });
+
   const range = hi - lo;
   if (range === 0) return null;
 
-  const BINS = 24;
+  const BINS = 48; // higher resolution
   const binSize = range / BINS;
-  const vol = new Array(BINS).fill(0);
-  candles.forEach(c => {
-    const idx = Math.min(Math.floor((c.typical - lo) / binSize), BINS - 1);
-    vol[idx] += c.volume;
-  });
 
+  const vol = new Array(BINS).fill(0);
+
+  candles.forEach(c => {
+  // distribute volume across HIGH → LOW (fake intrabar approximation)
+  const startIdx = Math.max(0, Math.floor((c.low - lo) / binSize));
+  const endIdx   = Math.min(BINS - 1, Math.floor((c.high - lo) / binSize));
+
+  const rangeBins = Math.max(1, endIdx - startIdx);
+
+  for (let i = startIdx; i <= endIdx; i++) {
+    // weighted distribution (middle gets more volume)
+    const weight = 1 / rangeBins;
+    vol[i] += c.volume * weight;
+  }
+});
+
+  // ── POC (highest volume node)
   let pocIdx = 0;
-  vol.forEach((v, i) => { if (v > vol[pocIdx]) pocIdx = i; });
+  for (let i = 1; i < BINS; i++) {
+    if (vol[i] > vol[pocIdx]) pocIdx = i;
+  }
+
   const poc = lo + (pocIdx + 0.5) * binSize;
 
+  // ── Value Area (70%)
   const totalVol = vol.reduce((a, b) => a + b, 0);
   const target = totalVol * 0.70;
-  let vaVol = vol[pocIdx], vaLo = pocIdx, vaHi = pocIdx;
+
+  let left = pocIdx;
+  let right = pocIdx;
+  let vaVol = vol[pocIdx];
+
   while (vaVol < target) {
-    const nextLo = vaLo > 0       ? vol[vaLo - 1] : 0;
-    const nextHi = vaHi < BINS-1  ? vol[vaHi + 1] : 0;
-    if (nextLo >= nextHi && vaLo > 0) { vaLo--; vaVol += nextLo; }
-    else if (vaHi < BINS - 1)         { vaHi++; vaVol += nextHi; }
-    else break;
+    const leftVol = left > 0 ? vol[left - 1] : 0;
+    const rightVol = right < BINS - 1 ? vol[right + 1] : 0;
+
+    if (rightVol > leftVol) {
+      right++;
+      vaVol += rightVol;
+    } else {
+      left--;
+      vaVol += leftVol;
+    }
+
+    if (left <= 0 && right >= BINS - 1) break;
   }
+
+  const vah = lo + (right + 1) * binSize;
+  const val = lo + left * binSize;
+
+  // ── HVN / LVN detection
+  const avgVol = totalVol / BINS;
+
+  const hvn = [];
+  const lvn = [];
+
+  for (let i = 1; i < BINS - 1; i++) {
+    if (
+      vol[i] > vol[i - 1] &&
+      vol[i] > vol[i + 1] &&
+      vol[i] > avgVol * 1.3
+    ) {
+      hvn.push(lo + (i + 0.5) * binSize);
+    }
+
+    if (vol[i] < avgVol * 0.5) {
+      lvn.push(lo + (i + 0.5) * binSize);
+    }
+  }
+
   return {
     poc,
-    vah: lo + (vaHi + 1) * binSize,
-    val: lo + vaLo * binSize,
-    hi, lo
+    vah,
+    val,
+    hi,
+    lo,
+    hvn,
+    lvn
   };
 }
+function detectLiquiditySweep(candles, vp) {
+  const cur = candles[candles.length - 1];
 
+  let sweep = false;
+
+  // price went above VAH but came back down = fake breakout
+  if (cur.high > vp.vah && cur.close < vp.vah) {
+    sweep = true;
+  }
+
+  // price went below VAL but came back up = fake breakdown
+  if (cur.low < vp.val && cur.close > vp.val) {
+    sweep = true;
+  }
+
+  return sweep;
+}
 function detectSignals(symbol, candles, tf) {
-  const vpCandles = candles.slice(0, -1);
-  const vp = calcVolumeProfile(vpCandles);
+  const vp = calcVolumeProfile(candles);
   if (!vp) return [];
-  const cur  = candles[candles.length - 1];
+
+  const cur = candles[candles.length - 1];
   const prev = candles[candles.length - 2];
   const price = cur.close;
+
   const signals = [];
+
   const pct = (a, b) => Math.abs(a - b) / (b || 1) * 100;
 
-  if (prev.close <= vp.vah && cur.close > vp.vah)
-    signals.push({ symbol, type:'VAH', price, vp, strength: Math.min(100, Math.round(55 + pct(price, vp.vah)*3)), tf });
-  if (prev.close < vp.val && cur.close >= vp.val && cur.close < vp.vah)
-    signals.push({ symbol, type:'VAL', price, vp, strength: Math.min(100, Math.round(50 + pct(price, vp.val)*5)), tf });
-  if (cur.low <= vp.poc * 1.003 && cur.close > vp.poc && prev.close <= vp.poc * 1.004)
-    signals.push({ symbol, type:'POC', price, vp, strength: Math.min(100, Math.round(48 + pct(price, vp.poc)*6)), tf });
+  // ─────────────────────────────────────────────
+  // 1. VAH BREAK (trend continuation)
+  if (prev.close <= vp.vah && cur.close > vp.vah) {
+    signals.push({
+      symbol,
+      type: 'VAH',
+      price,
+      vp,
+      strength: Math.min(100, Math.round(55 + pct(price, vp.vah) * 3)),
+      tf
+    });
+  }
+
+  // ─────────────────────────────────────────────
+  // 2. VAL RECLAIM (mean reversion long)
+  if (prev.close < vp.val && cur.close >= vp.val && cur.close < vp.vah) {
+    signals.push({
+      symbol,
+      type: 'VAL',
+      price,
+      vp,
+      strength: Math.min(100, Math.round(50 + pct(price, vp.val) * 5)),
+      tf
+    });
+  }
+
+  // ─────────────────────────────────────────────
+  // 3. POC REACTION (balance zone reaction)
+  if (
+    cur.low <= vp.poc * 1.003 &&
+    cur.close > vp.poc &&
+    prev.close <= vp.poc * 1.004
+  ) {
+    signals.push({
+      symbol,
+      type: 'POC',
+      price,
+      vp,
+      strength: Math.min(100, Math.round(48 + pct(price, vp.poc) * 6)),
+      tf
+    });
+  }
+
+  // ─────────────────────────────────────────────
+  // 4. HVN REJECTION (NEW - institutional trap signal)
+  for (let level of vp.hvn) {
+    if (cur.high >= level && cur.close < level) {
+      signals.push({
+        symbol,
+        type: 'HVN_REJECT',
+        price,
+        vp,
+        strength: Math.min(100, Math.round(60 + pct(price, level) * 4)),
+        tf
+      });
+      break;
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // 5. LVN BREAKOUT (NEW - momentum expansion)
+  for (let level of vp.lvn) {
+    if (prev.close < level && cur.close > level) {
+      signals.push({
+        symbol,
+        type: 'LVN_BREAK',
+        price,
+        vp,
+        strength: Math.min(100, Math.round(65 + pct(price, level) * 5)),
+        tf
+      });
+      break;
+    }
+  }
 
   return signals;
 }
