@@ -179,7 +179,8 @@ function calcVolumeProfile(candles) {
 }
 
 function detectSignals(symbol, candles, tf) {
-  const vp = calcVolumeProfile(candles);
+  const vpCandles = candles.slice(0, -1);
+  const vp = calcVolumeProfile(vpCandles);
   if (!vp) return [];
   const cur  = candles[candles.length - 1];
   const prev = candles[candles.length - 2];
