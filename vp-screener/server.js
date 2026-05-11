@@ -188,7 +188,7 @@ const vp = calcVolumeProfile(vpCandles);
   const signals = [];
   const pct = (a, b) => Math.abs(a - b) / (b || 1) * 100;
 
-  if (prev.close <= vp.vah && cur.close > vp.vah)
+  if (cur.high > vp.vah && cur.close > vp.vah * 0.998)
     signals.push({ symbol, type:'VAH', price, vp, strength: Math.min(100, Math.round(55 + pct(price, vp.vah)*3)), tf });
   if (prev.close < vp.val && cur.close >= vp.val && cur.close < vp.vah)
     signals.push({ symbol, type:'VAL', price, vp, strength: Math.min(100, Math.round(50 + pct(price, vp.val)*5)), tf });
