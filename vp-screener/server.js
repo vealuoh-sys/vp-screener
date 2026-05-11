@@ -278,7 +278,7 @@ function detectSignals(symbol, candles, tf) {
   const price = cur.close;
 
   const signals = [];
-  
+    
   const pct = (a, b) => Math.abs(a - b) / (b || 1) * 100;
 
   // ─────────────────────────────────────────────
