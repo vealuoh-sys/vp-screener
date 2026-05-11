@@ -181,6 +181,24 @@ function calcVolumeProfile(candles) {
   // ── Value Area (70%)
   const totalVol = vol.reduce((a, b) => a + b, 0);
   const target = totalVol * 0.70;
+  let hvn = [];
+let lvn = [];
+
+const avgVol = vol.reduce((a, b) => a + b, 0) / BINS;
+
+for (let i = 1; i < BINS - 1; i++) {
+  const priceLevel = lo + (i + 0.5) * binSize;
+
+  // HVN = strong volume clusters
+  if (vol[i] > vol[i - 1] && vol[i] > vol[i + 1] && vol[i] > avgVol * 1.2) {
+    hvn.push(priceLevel);
+  }
+
+  // LVN = weak volume gaps
+  if (vol[i] < avgVol * 0.6) {
+    lvn.push(priceLevel);
+  }
+}
 
   let left = pocIdx;
   let right = pocIdx;
@@ -260,7 +278,7 @@ function detectSignals(symbol, candles, tf) {
   const price = cur.close;
 
   const signals = [];
-
+  
   const pct = (a, b) => Math.abs(a - b) / (b || 1) * 100;
 
   // ─────────────────────────────────────────────
