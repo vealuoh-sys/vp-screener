@@ -218,7 +218,7 @@ function checkDivergence(candles, rsi) {
   return null;
 }
 
-function detectSignals(symbol, candles, tf) {
+ffunction detectSignals(symbol, candles, tf) {
   const vpCandles = candles.slice(0, -1);
   const vp = calcVolumeProfile(vpCandles);
   if (!vp) return [];
@@ -229,34 +229,37 @@ function detectSignals(symbol, candles, tf) {
   const cur = candles[curr];
   const prev = candles[curr - 1];
   const price = cur.close;
+
+  // --- NEW: Whale Volume Logic ---
+  const last10Vol = candles.slice(-11, -1).reduce((sum, c) => sum + c.volume, 0) / 10;
+  const rvol = cur.volume / (last10Vol || 1); 
+  const isWhale = rvol > 1.8; // 1.8x more volume than usual = Whale!
+
   const signals = [];
 
-  // 1. VAH BREAK Logic
+  // VAH Break
   if (prev.close <= vp.vah && cur.close > vp.vah) {
-    if (div === 'BEARISH') {
-      signals.push({ symbol, type:'WARNING', price, vp, strength: 20, tf, msg: 'VAH BREAK + BEARISH DIV (FAKE)' });
-    } else {
-      signals.push({ symbol, type:'VAH', price, vp, strength: 60, tf });
-    }
+    let type = (div === 'BEARISH') ? 'WARNING' : 'VAH';
+    let strength = (div === 'BEARISH') ? 20 : (isWhale ? 90 : 60);
+    signals.push({ symbol, type, price, vp, strength, tf, rvol, whale: isWhale });
   }
 
-  // 2. VAL RECLAIM Logic
+  // VAL Reclaim
   if (prev.close < vp.val && cur.close >= vp.val) {
-    let strength = (div === 'BULLISH') ? 90 : 55;
     let type = (div === 'BULLISH') ? 'VAL_DIV' : 'VAL';
-    signals.push({ symbol, type, price, vp, strength, tf });
+    let strength = (div === 'BULLISH' && isWhale) ? 98 : (isWhale ? 85 : 55);
+    signals.push({ symbol, type, price, vp, strength, tf, rvol, whale: isWhale });
   }
 
-  // 3. POC REACT Logic
+  // POC React
   if (cur.low <= vp.poc * 1.003 && cur.close > vp.poc) {
-    let strength = (div === 'BULLISH') ? 85 : 50;
-    let type = (div === 'BULLISH') ? 'POC_DIV' : 'POC';
-    signals.push({ symbol, type, price, vp, strength, tf });
+    let type = (div === 'POC_DIV' : 'POC');
+    let strength = (isWhale) ? 80 : 50;
+    signals.push({ symbol, type, price, vp, strength, tf, rvol, whale: isWhale });
   }
 
   return signals;
 }
-
 function setCORS(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -265,7 +268,7 @@ function setCORS(res) {
 
 async function runBackgroundScan() {
   const tfs = Object.keys(TF_MAP);
-  const allSignals = [];
+  const rawSignals = [];
   let scanned = 0;
   const jobs = [];
   for (const sym of SCAN_PAIRS) for (const tf of tfs) jobs.push({ sym, tf });
@@ -280,7 +283,7 @@ async function runBackgroundScan() {
         const candles = await fetchKlines(sym, TF_MAP[tf], 100);
         const sigs = detectSignals(sym, candles, tf);
         sigs.forEach(s => alertSignal(s));
-        allSignals.push(...sigs);
+        rawSignals.push(...sigs);
         scanned++;
         console.log(`[OK] ${sym}/${tf}`);
       } catch(e) {
@@ -290,7 +293,27 @@ async function runBackgroundScan() {
     await new Promise(r => setTimeout(r, 500)); // Small delay between batches
   }
 
-  scanCache = { signals: allSignals, scanned, ts: new Date().toISOString() };
+  // --- START: The Golden Setup Sorting ---
+  const grouped = {};
+  rawSignals.forEach(s => {
+    if (!grouped[s.symbol]) grouped[s.symbol] = [];
+    grouped[s.symbol].push(s);
+  });
+
+  const finalSignals = [];
+  for (const sym in grouped) {
+    const coinSigs = grouped[sym];
+    const isGolden = coinSigs.length > 1; // It's Golden if we have 1h AND 4h signals
+
+    coinSigs.forEach(s => {
+      if (isGolden) {
+        s.confluence = true; 
+        s.strength = Math.min(100, s.strength + 15); // Bonus boost!
+      }
+      finalSignals.push(s);
+    });
+  }
+  // --- END: The Golden Setup Sorting --
   alertedSignals.clear();
   console.log(`[SCAN DONE] ${scanned} scanned, ${allSignals.length} signals`);
   sendTelegram(`📊 <b>Scan Complete</b>\n${scanned} coins scanned\n🔔 ${allSignals.length} signals found!`).catch(()=>{});
