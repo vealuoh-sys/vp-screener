@@ -177,23 +177,81 @@ function calcVolumeProfile(candles) {
     hi, lo
   };
 }
+// --- RSI Calculation ---
+function calcRSI(candles, period = 14) {
+  if (candles.length <= period) return new Array(candles.length).fill(50);
+  let gains = 0, losses = 0;
+  for (let i = 1; i <= period; i++) {
+    let diff = candles[i].close - candles[i-1].close;
+    if (diff > 0) gains += diff; else losses -= diff;
+  }
+  let avgGain = gains / period;
+  let avgLoss = losses / period;
+  const rsi = new Array(candles.length).fill(null);
+  
+  for (let i = period + 1; i < candles.length; i++) {
+    let diff = candles[i].close - candles[i-1].close;
+    let gain = diff > 0 ? diff : 0;
+    let loss = diff < 0 ? -diff : 0;
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+    rsi[i] = 100 - (100 / (1 + (avgGain / avgLoss)));
+  }
+  return rsi;
+}
+
+// --- Divergence Detection ---
+function checkDivergence(candles, rsi) {
+  const curr = candles.length - 1;
+  const prev = curr - 5; // Look back a few candles for a peak/valley
+  
+  // Bearish Divergence: Price Higher High, RSI Lower High
+  const priceHH = candles[curr].high > candles[prev].high;
+  const rsiLH = rsi[curr] < rsi[prev];
+  
+  // Bullish Divergence: Price Lower Low, RSI Higher Low
+  const priceLL = candles[curr].low < candles[prev].low;
+  const rsiHL = rsi[curr] > rsi[prev];
+
+  if (priceHH && rsiLH) return 'BEARISH';
+  if (priceLL && rsiHL) return 'BULLISH';
+  return null;
+}
 
 function detectSignals(symbol, candles, tf) {
   const vpCandles = candles.slice(0, -1);
-const vp = calcVolumeProfile(vpCandles);
+  const vp = calcVolumeProfile(vpCandles);
   if (!vp) return [];
-  const cur  = candles[candles.length - 1];
-  const prev = candles[candles.length - 2];
+  
+  const rsi = calcRSI(candles);
+  const div = checkDivergence(candles, rsi);
+  const cur = candles[curr = candles.length - 1];
+  const prev = candles[curr - 1];
   const price = cur.close;
   const signals = [];
-  const pct = (a, b) => Math.abs(a - b) / (b || 1) * 100;
 
-  if (prev.close <= vp.vah && cur.close > vp.vah)
-    signals.push({ symbol, type:'VAH', price, vp, strength: Math.min(100, Math.round(55 + pct(price, vp.vah)*3)), tf });
-  if (prev.close < vp.val && cur.close >= vp.val && cur.close < vp.vah)
-    signals.push({ symbol, type:'VAL', price, vp, strength: Math.min(100, Math.round(50 + pct(price, vp.val)*5)), tf });
-  if (cur.low <= vp.poc * 1.003 && cur.close > vp.poc && prev.close <= vp.poc * 1.004)
-    signals.push({ symbol, type:'POC', price, vp, strength: Math.min(100, Math.round(48 + pct(price, vp.poc)*6)), tf });
+  // 1. VAH BREAK Logic
+  if (prev.close <= vp.vah && cur.close > vp.vah) {
+    if (div === 'BEARISH') {
+      signals.push({ symbol, type:'WARNING', price, vp, strength: 20, tf, msg: 'VAH BREAK + BEARISH DIV (FAKE)' });
+    } else {
+      signals.push({ symbol, type:'VAH', price, vp, strength: 60, tf });
+    }
+  }
+
+  // 2. VAL RECLAIM Logic
+  if (prev.close < vp.val && cur.close >= vp.val) {
+    let strength = (div === 'BULLISH') ? 90 : 55;
+    let type = (div === 'BULLISH') ? 'VAL_DIV' : 'VAL';
+    signals.push({ symbol, type, price, vp, strength, tf });
+  }
+
+  // 3. POC REACT Logic
+  if (cur.low <= vp.poc * 1.003 && cur.close > vp.poc) {
+    let strength = (div === 'BULLISH') ? 85 : 50;
+    let type = (div === 'BULLISH') ? 'POC_DIV' : 'POC';
+    signals.push({ symbol, type, price, vp, strength, tf });
+  }
 
   return signals;
 }
