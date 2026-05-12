@@ -225,7 +225,8 @@ function detectSignals(symbol, candles, tf) {
   
   const rsi = calcRSI(candles);
   const div = checkDivergence(candles, rsi);
-  const cur = candles[curr = candles.length - 1];
+  const curr = candles.length - 1;
+  const cur = candles[curr];
   const prev = candles[curr - 1];
   const price = cur.close;
   const signals = [];
@@ -326,6 +327,12 @@ const server = http.createServer(async (req, res) => {
     try {
       const candles = await fetchKlines(symbol, interval, 100);
       const vp      = calcVolumeProfile(candles);
+      
+      // --- ADD THESE TWO LINES TO FIX THE FLAT RSI ---
+      const rsiValues = calcRSI(candles); 
+      candles.forEach((c, i) => c.rsi = rsiValues[i]); 
+      // -----------------------------------------------
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: true, symbol, interval, candles, vp }));
     } catch(e) {
