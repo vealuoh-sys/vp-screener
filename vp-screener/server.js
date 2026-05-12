@@ -269,7 +269,7 @@ function setCORS(res) {
 
 async function runBackgroundScan() {
   const tfs = Object.keys(TF_MAP);
-  const allSignals = [];
+  const rawSignals = [];
   let scanned = 0;
   const jobs = [];
   for (const sym of SCAN_PAIRS) for (const tf of tfs) jobs.push({ sym, tf });
@@ -284,7 +284,7 @@ async function runBackgroundScan() {
         const candles = await fetchKlines(sym, TF_MAP[tf], 100);
         const sigs = detectSignals(sym, candles, tf);
         sigs.forEach(s => alertSignal(s));
-        allSignals.push(...sigs);
+        rawSignals.push(...sigs);
         scanned++;
         console.log(`[OK] ${sym}/${tf}`);
       } catch(e) {
@@ -294,7 +294,29 @@ async function runBackgroundScan() {
     await new Promise(r => setTimeout(r, 500)); // Small delay between batches
   }
 
-  scanCache = { signals: allSignals, scanned, ts: new Date().toISOString() };
+  // --- NEW: Sorting the signals to find Golden Setups ---
+  const grouped = {};
+  rawSignals.forEach(s => {
+    if (!grouped[s.symbol]) grouped[s.symbol] = [];
+    grouped[s.symbol].push(s);
+  });
+
+  const finalSignals = [];
+  for (const sym in grouped) {
+    const coinSigs = grouped[sym];
+    const isGolden = coinSigs.length > 1; // True if it's on 1h AND 4h
+
+    coinSigs.forEach(s => {
+      if (isGolden) {
+        s.confluence = true; // Makes the row GLOW
+        s.strength = Math.min(100, s.strength + 15); // +15% Power
+      }
+      finalSignals.push(s);
+    });
+  }
+
+  // Now we save the FINISHED list
+  scanCache = { signals: finalSignals, scanned, ts: new Date().toISOString() };
   alertedSignals.clear();
   console.log(`[SCAN DONE] ${scanned} scanned, ${allSignals.length} signals`);
   sendTelegram(`📊 <b>Scan Complete</b>\n${scanned} coins scanned\n🔔 ${allSignals.length} signals found!`).catch(()=>{});
