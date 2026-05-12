@@ -7,6 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800;900&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>
+  .badge.WARNING { background: rgba(255, 94, 58, 0.2); color: #ff5e3a; border: 1px dashed #ff5e3a; animation: pulse 2s infinite; }
+.badge.VAL_DIV, .badge.POC_DIV { background: rgba(0, 255, 178, 0.2); color: var(--acc); border: 2px solid var(--acc); font-weight: 900; }
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 :root{
   --bg:#03080D;--s1:#080F18;--s2:#0C1A28;
   --border:#132435;--border2:#1E3A55;
