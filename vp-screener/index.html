@@ -968,10 +968,12 @@ window.addEventListener('resize', () => {
   if (!mainChartObj) return;
   const vpW = window.innerWidth > 640 ? 112 : 0;
   const mainW = Math.max(300, Math.floor(window.innerWidth * 0.96 - vpW - 20));
-  const mainEl = document.getElementById('mainChart');
-  const volEl  = document.getElementById('volChart');
-  mainEl.style.width = mainW + 'px';
-  volEl.style.width  = mainW + 'px';
+  
+  // Tell all three boxes to resize!
+  document.getElementById('mainChart').style.width = mainW + 'px';
+  document.getElementById('volChart').style.width = mainW + 'px';
+  document.getElementById('rsiChart').style.width = mainW + 'px';
+  
   mainChartObj.applyOptions({ width: mainW });
 });
 </script>
