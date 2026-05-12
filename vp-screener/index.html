@@ -460,7 +460,15 @@ function render() {
   }
   rows.innerHTML=filtered.map((s,i)=>{
     const sym=s.symbol.replace('USDT','');
-    const bl=s.type==='VAH'?'▲ VAH BREAK':s.type==='VAL'?'▼ VAL RECLAIM':'◆ POC REACT';
+    const labelMap = {
+  'VAH': '▲ VAH BREAK',
+  'VAL': '▼ VAL RECLAIM',
+  'POC': '◆ POC REACT',
+  'VAL_DIV': '🔥 VAL + BULL DIV',
+  'POC_DIV': '🔥 POC + BULL DIV',
+  'WARNING': '⚠️ VAH FAKEOUT'
+};
+const bl = labelMap[s.type] || s.type;
     const vpStr=JSON.stringify(s.vp).replace(/"/g,"'");
     return `
     <div class="row" style="animation-delay:${i*30}ms"
