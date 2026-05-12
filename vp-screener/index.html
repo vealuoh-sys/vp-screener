@@ -370,6 +370,7 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);displ
             </div>
           </div>
           <div id="volChart"></div>
+          <div id="rsiChart" style="height: 80px; border-top: 1px solid var(--border);"></div>
         </div>
         <div class="vp-sidebar">
           <div class="vp-sidebar-title">VOLUME PROFILE</div>
@@ -886,6 +887,38 @@ function buildLWChart(candles, vp) {
   });
 
   mainChartObj.timeScale().fitContent();
+  // ── RSI Chart (The Energy Room) ──────────────────────────────
+  const rsiEl = document.getElementById('rsiChart');
+  const rsiChart = LightweightCharts.createChart(rsiEl, {
+    width:  mainW,
+    height: 80,
+    layout: { background: { color: '#080F18' }, textColor: '#3A6880', fontFamily: "'Space Mono', monospace", fontSize: 9 },
+    grid:   { vertLines: { color: 'rgba(19,36,53,0.4)' }, horzLines: { color: 'rgba(19,36,53,0.4)' } },
+    rightPriceScale: { borderColor: '#132435', textColor: '#3A6880', scaleMargins: { top: 0.1, bottom: 0.1 } },
+    timeScale: { visible: false },
+  });
+
+  const rsiSeries = rsiChart.addLineSeries({
+    color: '#CF9FFF', // A nice purple color for RSI
+    lineWidth: 2,
+    priceShapeId: '',
+  });
+
+  // Calculate and set the RSI data
+  const rsiValues = candles.map((c, i) => ({
+    time: Math.floor(c.time / 1000),
+    value: c.rsi || 50 // Use the RSI from the server or 50 as default
+  }));
+  rsiSeries.setData(rsiValues);
+
+  // Add the "DANGER" lines at 70 and 30
+  rsiSeries.createPriceLine({ price: 70, color: 'rgba(255,94,58,0.4)', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'OVERBOUGHT' });
+  rsiSeries.createPriceLine({ price: 30, color: 'rgba(0,255,178,0.4)', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'OVERSOLD' });
+
+  // Make the RSI chart move when the Main chart moves
+  mainChartObj.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    if (range) rsiChart.timeScale().setVisibleLogicalRange(range);
+  });
 }
 
 function switchModalTF(btn) {
