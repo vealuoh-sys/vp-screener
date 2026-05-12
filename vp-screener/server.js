@@ -229,29 +229,33 @@ function detectSignals(symbol, candles, tf) {
   const cur = candles[curr];
   const prev = candles[curr - 1];
   const price = cur.close;
+
+  // --- WHALE DETECTION (1.8x normal volume) ---
+  const last10Vol = candles.slice(-11, -1).reduce((sum, c) => sum + c.volume, 0) / 10;
+  const rvol = cur.volume / (last10Vol || 1); 
+  const isWhale = rvol > 1.8; 
+
   const signals = [];
 
-  // 1. VAH BREAK Logic
+  // 1. VAH BREAK
   if (prev.close <= vp.vah && cur.close > vp.vah) {
-    if (div === 'BEARISH') {
-      signals.push({ symbol, type:'WARNING', price, vp, strength: 20, tf, msg: 'VAH BREAK + BEARISH DIV (FAKE)' });
-    } else {
-      signals.push({ symbol, type:'VAH', price, vp, strength: 60, tf });
-    }
+    let type = (div === 'BEARISH') ? 'WARNING' : 'VAH';
+    let strength = (div === 'BEARISH') ? 20 : (isWhale ? 90 : 60);
+    signals.push({ symbol, type, price, vp, strength, tf, rvol, whale: isWhale });
   }
 
-  // 2. VAL RECLAIM Logic
+  // 2. VAL RECLAIM
   if (prev.close < vp.val && cur.close >= vp.val) {
-    let strength = (div === 'BULLISH') ? 90 : 55;
     let type = (div === 'BULLISH') ? 'VAL_DIV' : 'VAL';
-    signals.push({ symbol, type, price, vp, strength, tf });
+    let strength = (div === 'BULLISH' && isWhale) ? 98 : (isWhale ? 85 : 55);
+    signals.push({ symbol, type, price, vp, strength, tf, rvol, whale: isWhale });
   }
 
-  // 3. POC REACT Logic
+  // 3. POC REACT
   if (cur.low <= vp.poc * 1.003 && cur.close > vp.poc) {
-    let strength = (div === 'BULLISH') ? 85 : 50;
     let type = (div === 'BULLISH') ? 'POC_DIV' : 'POC';
-    signals.push({ symbol, type, price, vp, strength, tf });
+    let strength = (isWhale) ? 80 : 50;
+    signals.push({ symbol, type, price, vp, strength, tf, rvol, whale: isWhale });
   }
 
   return signals;
