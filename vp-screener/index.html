@@ -863,7 +863,9 @@ function buildLWChart(candles, vp) {
   // VP level lines
   const makeFlatLine = (val) => lwCandles.map(c => ({ time: c.time, value: val }));
   const addLevel = (val, color, title) => {
-    const s = mainChartObj.addLineSeries({ color, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title, priceLineVisible: false, lastValueVisible: true, crosshairMarkerVisible: false });
+    // lastValueVisible: false — the price line below already shows the axis label
+    // so we only need the dashed line across the chart, not a second label
+    const s = mainChartObj.addLineSeries({ color, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: '', priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
     s.setData(makeFlatLine(val));
     candleSeries.createPriceLine({ price: val, color, lineWidth: 2, lineStyle: 2, axisLabelVisible: true, title: `◀ ${title}` });
   };
@@ -884,7 +886,7 @@ function buildLWChart(candles, vp) {
   if (ema20Data.length > 0) {
     const ema20Series = mainChartObj.addLineSeries({
       color: '#FF9500', lineWidth: 1.5,
-      title: 'EMA20', priceLineVisible: false, lastValueVisible: true,
+      title: 'EMA20', priceLineVisible: false, lastValueVisible: false,
       crosshairMarkerVisible: false,
     });
     ema20Series.setData(ema20Data);
@@ -893,7 +895,7 @@ function buildLWChart(candles, vp) {
   if (ema50Data.length > 0) {
     const ema50Series = mainChartObj.addLineSeries({
       color: '#BF5FFF', lineWidth: 1.5,
-      title: 'EMA50', priceLineVisible: false, lastValueVisible: true,
+      title: 'EMA50', priceLineVisible: false, lastValueVisible: false,
       crosshairMarkerVisible: false,
     });
     ema50Series.setData(ema50Data);
