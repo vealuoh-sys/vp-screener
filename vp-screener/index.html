@@ -13,12 +13,15 @@
   --acc:#00FFB2;--acc2:#00BFFF;--warn:#FFB800;
   --vah:#FF5E3A;--val:#00FFB2;--poc:#FFD700;
   --text:#B8D4E8;--muted:#3A6880;--muted2:#2A4D65;
+  --ema20:#FF9500;--ema50:#BF5FFF;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;min-height:100vh;overflow-x:hidden;}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,191,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,191,255,.018) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0;}
 body::after{content:'';position:fixed;top:-250px;left:50%;transform:translateX(-50%);width:900px;height:500px;background:radial-gradient(ellipse,rgba(0,191,255,.07) 0%,transparent 65%);pointer-events:none;z-index:0;}
-.app{position:relative;z-index:1;max-width:1480px;margin:0 auto;padding:18px 22px 40px;}
+.app{position:relative;z-index:1;max-width:1560px;margin:0 auto;padding:18px 22px 40px;}
+
+/* ── Header ── */
 header{display:flex;align-items:center;justify-content:space-between;padding:18px 0 22px;border-bottom:1px solid var(--border);margin-bottom:20px;flex-wrap:wrap;gap:14px;}
 .logo{display:flex;align-items:center;gap:16px;}
 .logo-mark{width:46px;height:46px;border:2px solid var(--acc);display:grid;place-items:center;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));background:rgba(0,255,178,.04);}
@@ -31,14 +34,14 @@ header{display:flex;align-items:center;justify-content:space-between;padding:18p
 .live-pill{display:flex;align-items:center;gap:7px;font-size:.65rem;letter-spacing:.18em;color:var(--acc);border:1px solid rgba(0,255,178,.3);padding:5px 14px;background:rgba(0,255,178,.04);clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px));}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--acc);animation:blink 1.4s ease-in-out infinite;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-.scan-time-wrap{display:flex;flex-direction:column;gap:3px;text-align:right;}
 .scan-time{font-size:.6rem;color:var(--muted);letter-spacing:.1em;}
-.scan-age{font-size:.56rem;color:var(--warn);letter-spacing:.08em;display:none;}
 .scan-btn{background:transparent;border:1px solid var(--acc2);color:var(--acc2);font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.14em;padding:9px 20px;cursor:pointer;clip-path:polygon(0 0,calc(100% - 9px) 0,100% 9px,100% 100%,9px 100%,0 calc(100% - 9px));transition:all .2s;display:flex;align-items:center;gap:8px;}
 .scan-btn:hover:not(:disabled){background:rgba(0,191,255,.1);box-shadow:0 0 24px rgba(0,191,255,.2);}
 .scan-btn:disabled{opacity:.45;cursor:default;}
 .spin{animation:rot 1s linear infinite;display:inline-block;}
 @keyframes rot{to{transform:rotate(360deg)}}
+
+/* ── Controls ── */
 .controls{display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
 .ctl-label{font-size:.58rem;color:var(--muted);letter-spacing:.2em;margin-right:2px;}
 .tf-btn,.sig-btn{background:var(--s1);border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;font-size:.64rem;letter-spacing:.1em;padding:5px 13px;cursor:pointer;transition:all .16s;}
@@ -49,6 +52,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:18p
 .sig-btn.on-poc{border-color:var(--poc);color:var(--poc);background:rgba(255,215,0,.06);}
 .divider{width:1px;height:22px;background:var(--border);margin:0 4px;}
 .flex1{flex:1;}
+
+/* ── Stats ── */
 .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
 @media(max-width:900px){.stats{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:500px){.stats{grid-template-columns:repeat(2,1fr);}}
@@ -56,12 +61,15 @@ header{display:flex;align-items:center;justify-content:space-between;padding:18p
 .stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--acc));}
 .stat-lbl{font-size:.56rem;color:var(--muted);letter-spacing:.2em;margin-bottom:7px;}
 .stat-val{font-family:'Syne',sans-serif;font-weight:900;font-size:1.9rem;color:var(--c,#fff);line-height:1;}
+
+/* ── Table ── */
+/* FIX: added TREND column — 10 cols total */
 .tbl-wrap{background:var(--s1);border:1px solid var(--border);overflow:hidden;}
-.tbl-head{display:grid;grid-template-columns:52px 1fr 100px 100px 100px 100px 120px 80px 90px;padding:10px 18px;background:var(--s2);border-bottom:1px solid var(--border);}
+.tbl-head{display:grid;grid-template-columns:44px 1fr 100px 90px 90px 90px 130px 70px 110px 80px;padding:10px 18px;background:var(--s2);border-bottom:1px solid var(--border);}
 .th{font-size:.56rem;color:var(--muted);letter-spacing:.18em;text-align:right;}
 .th:nth-child(-n+2){text-align:left;}
 .rows{min-height:260px;}
-.row{display:grid;grid-template-columns:52px 1fr 100px 100px 100px 100px 120px 80px 90px;padding:11px 18px;border-bottom:1px solid rgba(19,36,53,.8);align-items:center;transition:background .15s;animation:fadeUp .28s ease both;opacity:0;cursor:pointer;}
+.row{display:grid;grid-template-columns:44px 1fr 100px 90px 90px 90px 130px 70px 110px 80px;padding:11px 18px;border-bottom:1px solid rgba(19,36,53,.8);align-items:center;transition:background .15s;animation:fadeUp .28s ease both;opacity:0;cursor:pointer;}
 @keyframes fadeUp{to{opacity:1;transform:translateY(0);}from{opacity:0;transform:translateY(8px);}}
 .row:hover{background:rgba(0,255,178,.04);}
 .td{font-size:.7rem;text-align:right;color:var(--text);}
@@ -72,47 +80,80 @@ header{display:flex;align-items:center;justify-content:space-between;padding:18p
 .pair{font-size:.56rem;color:var(--muted);}
 .price{font-size:.74rem;font-weight:700;color:#fff;}
 .lvl{font-size:.66rem;color:var(--muted);}
+
+/* ── Signal badges — FIX: all types covered ── */
 .badge{display:inline-flex;align-items:center;gap:5px;font-size:.58rem;font-weight:700;padding:3px 9px;letter-spacing:.08em;white-space:nowrap;}
-.badge.VAH{background:rgba(255,94,58,.1);color:var(--vah);border:1px solid rgba(255,94,58,.28);}
-.badge.VAL{background:rgba(0,255,178,.07);color:var(--val);border:1px solid rgba(0,255,178,.22);}
-.badge.POC{background:rgba(255,215,0,.07);color:var(--poc);border:1px solid rgba(255,215,0,.22);}
-.badge.VAL_DIV,.badge.POC_DIV{background:rgba(0,255,178,.2);color:var(--acc);border:2px solid var(--acc);font-weight:900;}
-.badge.WARNING{background:rgba(255,94,58,.2);color:#ff5e3a;border:1px dashed #ff5e3a;animation:pulse 2s infinite;}
+.badge.VAH    {background:rgba(255,94,58,.1);color:var(--vah);border:1px solid rgba(255,94,58,.28);}
+.badge.VAH_SPIKE{background:rgba(255,94,58,.18);color:#FF8060;border:2px solid var(--vah);font-weight:900;}
+.badge.VAL    {background:rgba(0,255,178,.07);color:var(--val);border:1px solid rgba(0,255,178,.22);}
+.badge.VAL_DIV{background:rgba(0,255,178,.18);color:var(--acc);border:2px solid var(--acc);font-weight:900;}
+.badge.VAL_SPIKE{background:rgba(0,255,178,.18);color:var(--acc);border:2px solid var(--acc);font-weight:900;}
+.badge.POC    {background:rgba(255,215,0,.07);color:var(--poc);border:1px solid rgba(255,215,0,.22);}
+.badge.POC_DIV{background:rgba(255,215,0,.18);color:#FFE55C;border:2px solid var(--poc);font-weight:900;}
+.badge.POC_SPIKE{background:rgba(255,215,0,.18);color:#FFE55C;border:2px solid var(--poc);font-weight:900;}
+.badge.WARNING{background:rgba(255,94,58,.12);color:#ff5e3a;border:1px dashed #ff5e3a;animation:pulse 2s infinite;}
 @keyframes pulse{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
+
+/* ── Trend pill ── */
+.trend-pill{display:inline-flex;align-items:center;gap:4px;font-size:.56rem;font-weight:700;padding:2px 7px;letter-spacing:.06em;white-space:nowrap;}
+.trend-pill.UP     {color:#00FFB2;background:rgba(0,255,178,.08);border:1px solid rgba(0,255,178,.25);}
+.trend-pill.DOWN   {color:#FF5E3A;background:rgba(255,94,58,.08);border:1px solid rgba(255,94,58,.25);}
+.trend-pill.NEUTRAL{color:var(--muted);background:rgba(58,104,128,.1);border:1px solid var(--border2);}
+
+/* ── Volume tier pip ── */
+.vol-tier{display:inline-flex;align-items:center;gap:4px;font-size:.55rem;padding:2px 6px;letter-spacing:.05em;}
+.vol-tier.SPIKE    {color:#FF9500;background:rgba(255,149,0,.12);border:1px solid rgba(255,149,0,.3);}
+.vol-tier.CONFIRMED{color:#BF5FFF;background:rgba(191,95,255,.1);border:1px solid rgba(191,95,255,.28);}
+.vol-tier.STRONG   {color:var(--acc2);background:rgba(0,191,255,.08);border:1px solid rgba(0,191,255,.2);}
+.vol-tier.NORMAL   {color:var(--muted);border:1px solid var(--border);}
+
 .tf-tag{font-size:.6rem;padding:2px 8px;letter-spacing:.12em;border:1px solid var(--border2);color:var(--acc2);background:rgba(0,191,255,.05);}
 .str-wrap{display:flex;align-items:center;gap:6px;justify-content:flex-end;}
-.bar-bg{width:48px;height:3px;background:var(--border2);}
+.bar-bg{width:44px;height:3px;background:var(--border2);}
 .bar-fg{height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc));}
 .str-n{font-size:.6rem;color:var(--acc);width:30px;text-align:right;}
+
+/* ── Skeleton / empty ── */
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:90px 20px;gap:12px;}
 .empty-ico{font-size:2.8rem;opacity:.15;}
 .empty-txt{font-size:.7rem;color:var(--muted);letter-spacing:.12em;text-align:center;line-height:1.9;}
-.skel-row{display:grid;grid-template-columns:52px 1fr 100px 100px 100px 100px 120px 80px 90px;padding:11px 18px;border-bottom:1px solid rgba(19,36,53,.8);align-items:center;}
+.skel-row{display:grid;grid-template-columns:44px 1fr 100px 90px 90px 90px 130px 70px 110px 80px;padding:11px 18px;border-bottom:1px solid rgba(19,36,53,.8);align-items:center;}
 .skel{height:13px;border-radius:2px;margin-right:10px;background:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%);background-size:200% 100%;animation:shim 1.5s infinite;}
 @keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .prog-wrap{display:none;align-items:center;gap:10px;padding:8px 18px;background:var(--s2);border-bottom:1px solid var(--border);font-size:.62rem;color:var(--muted);letter-spacing:.1em;}
 .prog-wrap.show{display:flex;}
 .prog-bg{flex:1;height:3px;background:var(--border2);}
 .prog-fg{height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc));transition:width .3s ease;}
+
+/* ── Footer ── */
 footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
 .foot-note{font-size:.56rem;color:var(--muted);letter-spacing:.1em;}
 .legend{display:flex;gap:18px;flex-wrap:wrap;}
 .leg-item{display:flex;align-items:center;gap:6px;font-size:.57rem;color:var(--muted);}
 .leg-dot{width:8px;height:8px;border-radius:50%;}
+
+/* ── Toast ── */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--s2);border:1px solid var(--vah);color:var(--vah);font-size:.65rem;letter-spacing:.1em;padding:10px 18px;z-index:999;display:none;}
 .click-hint{font-size:.55rem;color:var(--muted);letter-spacing:.1em;text-align:right;padding:6px 18px;border-bottom:1px solid var(--border);}
-/* CHART MODAL */
+
+/* ── CHART MODAL ── */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
 .modal-overlay.open{display:flex;}
-.modal{background:var(--s1);border:1px solid var(--border2);border-top:3px solid var(--acc2);width:96vw;max-width:1100px;max-height:94vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(0,191,255,.12);}
+.modal{background:var(--s1);border:1px solid var(--border2);border-top:3px solid var(--acc2);width:96vw;max-width:1160px;max-height:94vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(0,191,255,.12),0 0 0 1px rgba(0,191,255,.06);}
 .modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:var(--s2);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px;}
-.modal-title-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.modal-title-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .modal-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;color:#fff;letter-spacing:.1em;}
 .modal-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .modal-price-big{font-family:'Syne',sans-serif;font-weight:900;font-size:1.1rem;color:#fff;}
 .modal-change{font-size:.65rem;padding:2px 7px;}
 .modal-change.up{color:var(--acc);background:rgba(0,255,178,.08);border:1px solid rgba(0,255,178,.2);}
 .modal-change.dn{color:var(--vah);background:rgba(255,94,58,.08);border:1px solid rgba(255,94,58,.2);}
+
+/* ── Signal context bar below modal header ── */
+.modal-ctx-bar{display:flex;align-items:center;gap:14px;padding:7px 18px;background:var(--bg);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.ctx-item{display:flex;align-items:center;gap:6px;font-size:.58rem;color:var(--muted);letter-spacing:.1em;}
+.ctx-val{font-size:.62rem;color:var(--text);font-weight:700;}
+
 .modal-tf-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .modal-tf-lbl{font-size:.55rem;color:var(--muted);letter-spacing:.18em;}
 .modal-tf-btn{background:var(--s1);border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.1em;padding:4px 11px;cursor:pointer;transition:all .15s;}
@@ -120,16 +161,25 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);displ
 .modal-tf-btn:hover:not(.on){border-color:var(--muted2);color:var(--text);}
 .modal-close{background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:.9rem;width:28px;height:28px;cursor:pointer;display:grid;place-items:center;transition:all .2s;flex-shrink:0;}
 .modal-close:hover{border-color:var(--vah);color:var(--vah);}
+
+/* Chart layout */
 .modal-body{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
-.chart-container{flex:1;display:flex;min-height:0;}
+.chart-container{flex:1;display:flex;min-height:0;gap:0;}
 .main-chart-wrap{flex:1;display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--border);}
-#mainChart{flex:1;min-height:0;}
-#volChart{height:80px;border-top:1px solid var(--border);}
-#rsiChart{height:80px;border-top:1px solid var(--border);}
+#mainChart{flex:1;min-height:0;position:relative;}
+#volChart{height:70px;border-top:1px solid var(--border);}
+#rsiChart{height:70px;border-top:1px solid var(--border);}
+
+/* VP Histogram sidebar */
 .vp-sidebar{width:110px;flex-shrink:0;background:var(--s2);display:flex;flex-direction:column;overflow:hidden;}
 .vp-sidebar-title{font-size:.5rem;color:var(--muted);letter-spacing:.18em;padding:8px 10px 6px;border-bottom:1px solid var(--border);text-align:center;}
+.vp-ema-legend{padding:6px 8px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:4px;}
+.vp-ema-row{display:flex;align-items:center;gap:5px;font-size:.5rem;color:var(--muted);}
+.vp-ema-dot{width:16px;height:2px;border-radius:1px;}
 #vpHistogram{flex:1;position:relative;overflow:hidden;}
-.chart-info-bar{display:grid;grid-template-columns:repeat(4,1fr);background:var(--s2);border-top:1px solid var(--border);flex-shrink:0;}
+
+/* Bottom info bar */
+.chart-info-bar{display:grid;grid-template-columns:repeat(5,1fr);background:var(--s2);border-top:1px solid var(--border);padding:0;flex-shrink:0;}
 .info-cell{padding:8px 14px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:3px;}
 .info-cell:last-child{border-right:none;}
 .info-lbl{font-size:.5rem;color:var(--muted);letter-spacing:.16em;}
@@ -138,32 +188,46 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);displ
 .info-val.poc-c{color:var(--poc);}
 .info-val.val-c{color:var(--val);}
 .info-val.dist-c{color:var(--acc2);}
+.info-val.trend-up{color:var(--acc);}
+.info-val.trend-dn{color:var(--vah);}
+.info-val.trend-n{color:var(--muted);}
+
+/* Tooltip overlay */
 .chart-tooltip{position:absolute;top:12px;left:12px;background:rgba(8,15,24,.92);border:1px solid var(--border2);padding:8px 12px;font-size:.6rem;pointer-events:none;z-index:10;display:none;min-width:160px;backdrop-filter:blur(4px);}
 .tt-row{display:flex;justify-content:space-between;gap:20px;margin-bottom:3px;}
 .tt-lbl{color:var(--muted);}
 .tt-val{color:#fff;font-weight:700;}
+
+/* Loading */
 .chart-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;font-size:.65rem;color:var(--muted);letter-spacing:.1em;}
 .loading-bar{width:180px;height:2px;background:var(--border2);overflow:hidden;}
 .loading-bar-inner{height:100%;width:30%;background:linear-gradient(90deg,var(--acc2),var(--acc));animation:loadSlide 1.2s ease-in-out infinite;}
 @keyframes loadSlide{0%{transform:translateX(-100%)}100%{transform:translateX(430%)}}
-@media(max-width:1050px){
-  .tbl-head,.row,.skel-row{grid-template-columns:44px 1fr 85px 120px 72px 82px;}
-  .th:nth-child(4),.th:nth-child(5),.th:nth-child(9),.td:nth-child(4),.td:nth-child(5),.td:nth-child(9),.skel-row div:nth-child(4),.skel-row div:nth-child(5),.skel-row div:nth-child(9){display:none;}
+
+/* ── Responsive ── */
+@media(max-width:1100px){
+  .tbl-head,.row,.skel-row{grid-template-columns:38px 1fr 90px 130px 70px 100px 80px;}
+  .th:nth-child(4),.th:nth-child(5),.th:nth-child(6),.th:nth-child(10),
+  .td:nth-child(4),.td:nth-child(5),.td:nth-child(6),.td:nth-child(10){display:none;}
   .vp-sidebar{width:80px;}
 }
-@media(max-width:640px){
-  .tbl-head,.row,.skel-row{grid-template-columns:36px 1fr 76px 120px 70px;}
-  .th:nth-child(4),.th:nth-child(5),.th:nth-child(6),.th:nth-child(9),.td:nth-child(4),.td:nth-child(5),.td:nth-child(6),.td:nth-child(9),.skel-row div:nth-child(4),.skel-row div:nth-child(5),.skel-row div:nth-child(6),.skel-row div:nth-child(9){display:none;}
+@media(max-width:700px){
+  .tbl-head,.row,.skel-row{grid-template-columns:32px 1fr 80px 130px 70px;}
+  .th:nth-child(n+4):not(:nth-child(7)):not(:nth-child(8)),
+  .td:nth-child(n+4):not(:nth-child(7)):not(:nth-child(8)){display:none;}
   .chart-info-bar{grid-template-columns:repeat(2,1fr);}
   .info-cell:nth-child(3){border-top:1px solid var(--border);}
-  .info-cell:nth-child(4){border-top:1px solid var(--border);border-right:none;}
+  .info-cell:nth-child(4){border-top:1px solid var(--border);}
+  .info-cell:nth-child(5){border-top:1px solid var(--border);border-right:none;}
   .vp-sidebar{display:none;}
   .modal-tf-row{display:none;}
+  .modal-ctx-bar{display:none;}
 }
 </style>
 </head>
 <body>
 <div class="app">
+
 <header>
   <div class="logo">
     <div class="logo-mark">
@@ -177,16 +241,14 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);displ
     </div>
     <div class="brand">
       <div class="brand-name">VP<em>SCAN</em></div>
-      <div class="brand-sub">BINANCE · VOLUME PROFILE · BULLISH SIGNALS ONLY</div>
+      <div class="brand-sub">BINANCE · VOLUME PROFILE · EMA TREND + VOL SPIKE SCORING</div>
     </div>
   </div>
   <div class="hdr-right">
-    <div class="scan-time-wrap">
-      <div class="scan-time" id="scanTime">LAST SCAN: —</div>
-      <div class="scan-age" id="scanAge"></div>
-    </div>
+    <div class="scan-time" id="scanTime">LAST SCAN: —</div>
     <div class="live-pill"><div class="dot"></div>LIVE</div>
-    <button class="scan-btn" id="scanBtn" onclick="triggerScan()">
+    <!-- FIX #7: button now calls triggerAndPoll() which hits /api/trigger-scan -->
+    <button class="scan-btn" id="scanBtn" onclick="triggerAndPoll()">
       <span id="scanIcon">⟳</span> SCAN NOW
     </button>
   </div>
@@ -194,20 +256,25 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);displ
 
 <div class="controls">
   <span class="ctl-label">TF:</span>
-  <button class="tf-btn on" data-tf="1h"  onclick="togTF(this)">1H</button>
-  <button class="tf-btn on" data-tf="4h"  onclick="togTF(this)">4H</button>
-  <button class="tf-btn on" data-tf="1d"  onclick="togTF(this)">1D</button>
+  <button class="tf-btn on" data-tf="1h" onclick="togTF(this)">1H</button>
+  <button class="tf-btn on" data-tf="4h" onclick="togTF(this)">4H</button>
+  <button class="tf-btn on" data-tf="1d" onclick="togTF(this)">1D</button>
   <div class="divider"></div>
   <span class="ctl-label">SIGNAL:</span>
-  <button class="sig-btn on-vah" data-sig="VAH" onclick="togSig(this)">▲ VAH BREAK</button>
-  <button class="sig-btn on-val" data-sig="VAL" onclick="togSig(this)">▼ VAL RECLAIM</button>
-  <button class="sig-btn on-poc" data-sig="POC" onclick="togSig(this)">◆ POC REACT</button>
+  <button class="sig-btn on-vah" data-sig="VAH" onclick="togSig(this)">▲ VAH</button>
+  <button class="sig-btn on-val" data-sig="VAL" onclick="togSig(this)">▼ VAL</button>
+  <button class="sig-btn on-poc" data-sig="POC" onclick="togSig(this)">◆ POC</button>
+  <div class="divider"></div>
+  <span class="ctl-label">TREND:</span>
+  <!-- FIX #13: WARNING filter now exposed in UI -->
+  <button class="sig-btn" id="warnBtn" data-sig="WARNING" onclick="togWarn(this)" style="border-color:#ff5e3a;color:#ff5e3a;">⚠ FAKEOUTS</button>
   <div class="flex1"></div>
   <span id="sigCount" style="font-size:.62rem;color:var(--muted);letter-spacing:.12em;">— SIGNALS</span>
 </div>
 
 <div class="stats">
   <div class="stat" style="--c:var(--acc2)"><div class="stat-lbl">COINS SCANNED</div><div class="stat-val" id="stScanned">—</div></div>
+  <!-- FIX #2: stat counts now use startsWith so VAH_SPIKE counts as VAH, etc. -->
   <div class="stat" style="--c:var(--vah)"><div class="stat-lbl">VAH BREAKS</div><div class="stat-val" id="stVAH">—</div></div>
   <div class="stat" style="--c:var(--val)"><div class="stat-lbl">VAL RECLAIMS</div><div class="stat-val" id="stVAL">—</div></div>
   <div class="stat" style="--c:var(--poc)"><div class="stat-lbl">POC REACTIONS</div><div class="stat-val" id="stPOC">—</div></div>
@@ -215,12 +282,20 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);displ
 </div>
 
 <div class="tbl-wrap">
+  <!-- FIX: 10-column header includes TREND -->
   <div class="tbl-head">
-    <div class="th">#</div><div class="th">COIN</div><div class="th">PRICE</div>
-    <div class="th">VAH</div><div class="th">VAL</div><div class="th">POC</div>
-    <div class="th">SIGNAL TYPE</div><div class="th">TF</div><div class="th">STRENGTH</div>
+    <div class="th">#</div>
+    <div class="th">COIN</div>
+    <div class="th">PRICE</div>
+    <div class="th">VAH</div>
+    <div class="th">VAL</div>
+    <div class="th">POC</div>
+    <div class="th">SIGNAL TYPE</div>
+    <div class="th">TF</div>
+    <div class="th">TREND + VOL</div>
+    <div class="th">STR</div>
   </div>
-  <div class="click-hint">TAP ANY ROW TO VIEW INTERACTIVE CHART WITH VP LEVELS</div>
+  <div class="click-hint">TAP ANY ROW TO VIEW INTERACTIVE CHART WITH VP LEVELS + EMA LINES</div>
   <div class="prog-wrap" id="progWrap">
     <span id="progTxt">SCANNING…</span>
     <div class="prog-bg"><div class="prog-fg" id="progFg" style="width:0%"></div></div>
@@ -228,28 +303,34 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);displ
   <div class="rows" id="rows">
     <div class="empty">
       <div class="empty-ico">◈</div>
-      <div class="empty-txt">CLICK "SCAN NOW" TO FETCH LIVE BINANCE DATA<br>AND SCREEN FOR VOLUME PROFILE BULLISH SIGNALS</div>
+      <div class="empty-txt">CLICK "SCAN NOW" TO FETCH LIVE BINANCE DATA<br>AND SCREEN FOR VOLUME PROFILE SIGNALS WITH EMA + VOLUME CONFIRMATION</div>
     </div>
   </div>
 </div>
 
 <footer>
-  <div class="foot-note">DATA: BINANCE API · VP LEVELS: 24-BIN · VALUE AREA: 70% · AUTO-REFRESH: 30 MIN · TAP ROW FOR INTERACTIVE CHART</div>
+  <div class="foot-note">DATA: BINANCE API · VP: 36-BIN · VALUE AREA: 70% · EMA20 + EMA50 TREND FILTER · VOL SPIKE 3x · AUTO-REFRESH: 30 MIN</div>
   <div class="legend">
-    <div class="leg-item"><div class="leg-dot" style="background:var(--vah)"></div>VAH = Value Area High</div>
-    <div class="leg-item"><div class="leg-dot" style="background:var(--val)"></div>VAL = Value Area Low</div>
-    <div class="leg-item"><div class="leg-dot" style="background:var(--poc)"></div>POC = Point of Control</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--vah)"></div>VAH BREAK</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--val)"></div>VAL RECLAIM</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--poc)"></div>POC REACT</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--ema20)"></div>EMA 20</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--ema50)"></div>EMA 50</div>
   </div>
 </footer>
 </div>
 
-<!-- CHART MODAL -->
+<!-- ══════════════════════════════════════════
+     CHART MODAL
+══════════════════════════════════════════ -->
 <div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
   <div class="modal" onclick="event.stopPropagation()">
+
     <div class="modal-hdr">
       <div class="modal-title-row">
         <div class="modal-title" id="modalTitle">—</div>
         <div class="modal-meta">
+          <!-- FIX #9: badge label set via labelMap covering all types -->
           <span id="modalBadge" class="badge">—</span>
           <span id="modalTF" class="tf-tag">—</span>
           <span id="modalPriceBig" class="modal-price-big">—</span>
@@ -264,11 +345,22 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);displ
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
+
+    <!-- Signal context bar (trend + vol info) -->
+    <div class="modal-ctx-bar" id="modalCtxBar">
+      <div class="ctx-item">TREND <span class="ctx-val" id="ctxTrend">—</span></div>
+      <div class="ctx-item">EMA20 <span class="ctx-val" id="ctxEMA20">—</span></div>
+      <div class="ctx-item">EMA50 <span class="ctx-val" id="ctxEMA50">—</span></div>
+      <div class="ctx-item">VOL TIER <span class="ctx-val" id="ctxVolTier">—</span></div>
+      <div class="ctx-item">VOL RATIO <span class="ctx-val" id="ctxVolRatio">—</span></div>
+    </div>
+
     <div class="modal-body">
       <div id="chartLoadingState" class="chart-loading" style="flex:1;">
         <div>LOADING CHART DATA…</div>
         <div class="loading-bar"><div class="loading-bar-inner"></div></div>
       </div>
+
       <div class="chart-container" id="chartContainer" style="display:none;">
         <div class="main-chart-wrap">
           <div id="mainChart" style="position:relative;">
@@ -284,16 +376,40 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);displ
           <div id="volChart"></div>
           <div id="rsiChart"></div>
         </div>
+
         <div class="vp-sidebar">
-          <div class="vp-sidebar-title">VOLUME PROFILE</div>
+          <div class="vp-sidebar-title">VOL PROFILE</div>
+          <!-- EMA legend in sidebar -->
+          <div class="vp-ema-legend">
+            <div class="vp-ema-row"><div class="vp-ema-dot" style="background:var(--ema20)"></div>EMA 20</div>
+            <div class="vp-ema-row"><div class="vp-ema-dot" style="background:var(--ema50)"></div>EMA 50</div>
+          </div>
           <canvas id="vpHistogram"></canvas>
         </div>
       </div>
+
+      <!-- FIX: 5th info cell for TREND -->
       <div class="chart-info-bar" id="chartInfoBar" style="display:none;">
-        <div class="info-cell"><div class="info-lbl">VAH — VALUE AREA HIGH</div><div class="info-val vah-c" id="infoVAH">—</div></div>
-        <div class="info-cell"><div class="info-lbl">POC — POINT OF CONTROL</div><div class="info-val poc-c" id="infoPOC">—</div></div>
-        <div class="info-cell"><div class="info-lbl">VAL — VALUE AREA LOW</div><div class="info-val val-c" id="infoVAL">—</div></div>
-        <div class="info-cell"><div class="info-lbl">DIST TO POC</div><div class="info-val dist-c" id="infoDist">—</div></div>
+        <div class="info-cell">
+          <div class="info-lbl">VAH — VALUE AREA HIGH</div>
+          <div class="info-val vah-c" id="infoVAH">—</div>
+        </div>
+        <div class="info-cell">
+          <div class="info-lbl">POC — POINT OF CONTROL</div>
+          <div class="info-val poc-c" id="infoPOC">—</div>
+        </div>
+        <div class="info-cell">
+          <div class="info-lbl">VAL — VALUE AREA LOW</div>
+          <div class="info-val val-c" id="infoVAL">—</div>
+        </div>
+        <div class="info-cell">
+          <div class="info-lbl">DIST TO POC</div>
+          <div class="info-val dist-c" id="infoDist">—</div>
+        </div>
+        <div class="info-cell">
+          <div class="info-lbl">EMA TREND</div>
+          <div class="info-val" id="infoTrend">—</div>
+        </div>
       </div>
     </div>
   </div>
@@ -302,24 +418,47 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);displ
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── State ────────────────────────────────────────────────────────
-let activeTFs    = new Set(['1h','4h','1d']);
-let activeSigs   = new Set(['VAH','VAL','POC']);
-let allSignals   = [];
-let scanTs       = null;
-let pollTimer    = null;
-let refreshTimer = null;
+// ─── State ────────────────────────────────────────────────────────────────────
+let activeTFs     = new Set(['1h','4h','1d']);
+let activeSigs    = new Set(['VAH','VAL','POC']);
+let showWarnings  = false;   // FIX #13: WARNING toggle tracked separately
+let allSignals    = [];
+let refreshTimer  = null;
+let pollTimer     = null;
 
-// Chart instances — keep all 3 so resize works on all of them
-let mainChartObj = null;
-let volChartObj  = null;
-let rsiChartObj  = null;
-let candleSeries = null;
-let currentSymbol  = null;
-let currentTF      = '1h';
-let currentSigType = null;
+// ─── FIX #14: Store ALL chart instances so they can all be destroyed ──────────
+let mainChartObj  = null;
+let volChartObj   = null;   // was a local var before — leaked on every TF switch
+let rsiChartObj   = null;   // same
+let candleSeries  = null;
+let volSeries     = null;
+let currentSymbol = null;
+let currentTF     = '1h';
+let currentSigType= null;
 
-// ─── Helpers ──────────────────────────────────────────────────────
+// ─── Label maps (shared by table rows AND modal badge) ────────────────────────
+// FIX #9: all signal types covered in one place
+const LABEL_MAP = {
+  VAH:       '▲ VAH BREAK',
+  VAH_SPIKE: '▲ VAH + SPIKE 🔥',
+  VAL:       '▼ VAL RECLAIM',
+  VAL_DIV:   '▼ VAL + DIV 🔥',
+  VAL_SPIKE: '▼ VAL + SPIKE 💥',
+  POC:       '◆ POC REACT',
+  POC_DIV:   '◆ POC + DIV 🔥',
+  POC_SPIKE: '◆ POC + SPIKE 💥',
+  WARNING:   '⚠ VAH FAKEOUT',
+};
+
+// ─── Base type helper (VAH_SPIKE → VAH) ──────────────────────────────────────
+function baseType(type) {
+  if (type.startsWith('VAH')) return 'VAH';
+  if (type.startsWith('VAL')) return 'VAL';
+  if (type.startsWith('POC')) return 'POC';
+  return type;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function fp(p) {
   if (!p && p !== 0) return '—';
   if (p >= 10000) return p.toLocaleString('en', { maximumFractionDigits: 1 });
@@ -335,78 +474,86 @@ function showSkeleton() {
   document.getElementById('rows').innerHTML =
     Array.from({ length: 10 }).map(() => `
     <div class="skel-row">
-      <div class="skel" style="width:28px"></div><div class="skel" style="width:75px"></div>
-      <div class="skel" style="width:80px"></div><div class="skel" style="width:80px"></div>
-      <div class="skel" style="width:80px"></div><div class="skel" style="width:80px"></div>
-      <div class="skel" style="width:100px"></div><div class="skel" style="width:40px"></div>
-      <div class="skel" style="width:65px"></div>
+      <div class="skel" style="width:24px"></div>
+      <div class="skel" style="width:70px"></div>
+      <div class="skel" style="width:80px"></div>
+      <div class="skel" style="width:75px"></div>
+      <div class="skel" style="width:75px"></div>
+      <div class="skel" style="width:75px"></div>
+      <div class="skel" style="width:110px"></div>
+      <div class="skel" style="width:35px"></div>
+      <div class="skel" style="width:95px"></div>
+      <div class="skel" style="width:55px"></div>
     </div>`).join('');
 }
 
-// ─── Scan age indicator ───────────────────────────────────────────
-function updateScanAge() {
-  if (!scanTs) return;
-  const ageEl = document.getElementById('scanAge');
-  const mins  = Math.floor((Date.now() - new Date(scanTs).getTime()) / 60000);
-  if (mins >= 5) {
-    ageEl.textContent   = 'DATA IS ' + mins + ' MIN OLD';
-    ageEl.style.display = 'block';
-  } else {
-    ageEl.style.display = 'none';
-  }
-}
-setInterval(updateScanAge, 60000);
-
-// ─── Render signal table ──────────────────────────────────────────
+// ─── Signal Table Render ──────────────────────────────────────────────────────
 function render() {
-  // FIX: VAL_DIV / POC_DIV / WARNING correctly pass through to display
+  // FIX #2: stat counts use baseType so VAH_SPIKE counts toward VAH, etc.
+  document.getElementById('stVAH').textContent   = allSignals.filter(s => baseType(s.type) === 'VAH').length;
+  document.getElementById('stVAL').textContent   = allSignals.filter(s => baseType(s.type) === 'VAL').length;
+  document.getElementById('stPOC').textContent   = allSignals.filter(s => baseType(s.type) === 'POC').length;
+  document.getElementById('stTotal').textContent = allSignals.length;
+
+  // Filter: TF + base signal type + optional warnings
   const filtered = allSignals.filter(s => {
+    const bt = baseType(s.type);
     if (!activeTFs.has(s.tf)) return false;
-    if (activeSigs.has(s.type)) return true;
-    if (s.type === 'VAL_DIV' && activeSigs.has('VAL')) return true;
-    if (s.type === 'POC_DIV' && activeSigs.has('POC')) return true;
-    if (s.type === 'WARNING'  && activeSigs.has('VAH')) return true;
-    return false;
+    if (s.type === 'WARNING') return showWarnings;
+    return activeSigs.has(bt);
   });
   filtered.sort((a, b) => b.strength - a.strength);
 
-  document.getElementById('stVAH').textContent   = allSignals.filter(s => s.type === 'VAH' || s.type === 'WARNING').length;
-  document.getElementById('stVAL').textContent   = allSignals.filter(s => s.type === 'VAL' || s.type === 'VAL_DIV').length;
-  document.getElementById('stPOC').textContent   = allSignals.filter(s => s.type === 'POC' || s.type === 'POC_DIV').length;
-  document.getElementById('stTotal').textContent = allSignals.length;
-  document.getElementById('sigCount').textContent = filtered.length + ' SIGNAL' + (filtered.length !== 1 ? 'S' : '');
-
+  document.getElementById('sigCount').textContent = `${filtered.length} SIGNAL${filtered.length !== 1 ? 'S' : ''}`;
   const rows = document.getElementById('rows');
   if (filtered.length === 0) {
-    rows.innerHTML = '<div class="empty"><div class="empty-ico">◈</div><div class="empty-txt">NO SIGNALS MATCH CURRENT FILTERS<br>TRY ENABLING MORE TIMEFRAMES OR SIGNAL TYPES</div></div>';
+    rows.innerHTML = `<div class="empty"><div class="empty-ico">◈</div><div class="empty-txt">NO SIGNALS MATCH CURRENT FILTERS<br>TRY ENABLING MORE TIMEFRAMES OR SIGNAL TYPES</div></div>`;
     return;
   }
 
-  const labelMap = {
-    VAH:'▲ VAH BREAK', VAL:'▼ VAL RECLAIM', POC:'◆ POC REACT',
-    VAL_DIV:'🔥 VAL + BULL DIV', POC_DIV:'🔥 POC + BULL DIV', WARNING:'⚠️ VAH FAKEOUT'
-  };
-
   rows.innerHTML = filtered.map((s, i) => {
-    const sym   = s.symbol.replace('USDT','');
-    const bl    = labelMap[s.type] || s.type;
-    const vpStr = JSON.stringify(s.vp).replace(/"/g,"'");
-    return '<div class="row" style="animation-delay:' + (i*30) + 'ms" onclick="openChart(\''+s.symbol+'\',\''+s.tf+'\',\''+s.type+'\','+vpStr+')">' +
-      '<div class="td rank">' + (i+1) + '</div>' +
-      '<div class="td"><div class="coin"><div class="sym">' + sym + '</div><div class="pair">' + s.symbol + '</div></div></div>' +
-      '<div class="td price">$' + fp(s.price) + '</div>' +
-      '<div class="td lvl">$' + fp(s.vp.vah) + '</div>' +
-      '<div class="td lvl">$' + fp(s.vp.val) + '</div>' +
-      '<div class="td lvl">$' + fp(s.vp.poc) + '</div>' +
-      '<div class="td"><span class="badge ' + s.type + '">' + bl + '</span></div>' +
-      '<div class="td"><span class="tf-tag">' + s.tf.toUpperCase() + '</span></div>' +
-      '<div class="td"><div class="str-wrap"><div class="bar-bg"><div class="bar-fg" style="width:' + s.strength + '%"></div></div><div class="str-n">' + s.strength + '%</div></div></div>' +
-    '</div>';
+    const sym    = s.symbol.replace('USDT', '');
+    const bl     = LABEL_MAP[s.type] || s.type;
+    const vpStr  = JSON.stringify(s.vp).replace(/"/g, "'");
+
+    // Trend pill
+    const trendLabel = s.trend === 'UP' ? '↑ UP' : s.trend === 'DOWN' ? '↓ DOWN' : '→ NEUT';
+    const trendClass = s.trend || 'NEUTRAL';
+
+    // Volume tier badge
+    const volLabel = s.volTier === 'SPIKE'     ? '🔥 3x+'  :
+                     s.volTier === 'CONFIRMED'  ? '✦ 2x+'  :
+                     s.volTier === 'STRONG'     ? '▲ 1.5x' : '○ NORM';
+    const volClass = s.volTier || 'NORMAL';
+
+    return `
+    <div class="row" style="animation-delay:${i * 28}ms"
+      onclick="openChart('${s.symbol}','${s.tf}','${s.type}',${vpStr})">
+      <div class="td rank">${i + 1}</div>
+      <div class="td"><div class="coin"><div class="sym">${sym}</div><div class="pair">${s.symbol}</div></div></div>
+      <div class="td price">$${fp(s.price)}</div>
+      <div class="td lvl">$${fp(s.vp.vah)}</div>
+      <div class="td lvl">$${fp(s.vp.val)}</div>
+      <div class="td lvl">$${fp(s.vp.poc)}</div>
+      <div class="td"><span class="badge ${s.type}">${bl}</span></div>
+      <div class="td"><span class="tf-tag">${s.tf.toUpperCase()}</span></div>
+      <div class="td" style="display:flex;flex-direction:column;gap:3px;align-items:flex-end;">
+        <span class="trend-pill ${trendClass}">${trendLabel}</span>
+        <span class="vol-tier ${volClass}">${volLabel}</span>
+      </div>
+      <div class="td">
+        <div class="str-wrap">
+          <div class="bar-bg"><div class="bar-fg" style="width:${s.strength}%"></div></div>
+          <div class="str-n">${s.strength}%</div>
+        </div>
+      </div>
+    </div>`;
   }).join('');
 }
 
-// ─── FIX: Scan Now triggers a REAL scan, then polls for completion ─
-async function triggerScan() {
+// ─── FIX #7: SCAN NOW properly triggers a new scan then polls for results ─────
+// Old code only read /api/scan (cache). Now it calls /api/trigger-scan first.
+async function triggerAndPoll() {
   const btn  = document.getElementById('scanBtn');
   const icon = document.getElementById('scanIcon');
   const prog = document.getElementById('progWrap');
@@ -415,68 +562,79 @@ async function triggerScan() {
 
   btn.disabled = true; icon.className = 'spin'; icon.textContent = '◌';
   prog.classList.add('show'); pfg.style.width = '5%';
-  ptxt.textContent = 'TRIGGERING SCAN…';
-  showSkeleton();
+  ptxt.textContent = 'STARTING SCAN…'; showSkeleton();
 
   try {
-    const res  = await fetch('/api/trigger-scan');
-    const data = await res.json();
-    ptxt.textContent = data.ok ? 'SCANNING BINANCE…' : 'SCAN IN PROGRESS…';
+    // Step 1: ask server to kick off a fresh scan
+    const trigRes = await fetch('/api/trigger-scan');
+    const trigData = await trigRes.json();
 
-    const oldTs     = scanTs;
-    let   fake      = 5;
-    const fakeTimer = setInterval(() => { fake = Math.min(fake + 1.2, 92); pfg.style.width = fake + '%'; }, 400);
+    if (!trigData.ok && trigData.message !== 'Scan already in progress') {
+      throw new Error(trigData.message || 'Could not start scan');
+    }
 
+    // Step 2: poll /api/scan every 2 s until scanning === false
+    ptxt.textContent = 'SCANNING BINANCE DATA…';
     clearInterval(pollTimer);
+    let progress = 8;
+
     pollTimer = setInterval(async () => {
       try {
-        const r = await fetch('/api/scan');
-        const d = await r.json();
-        if ((d.ts && d.ts !== oldTs) || (!d.scanning && d.scanned > 0)) {
-          clearInterval(pollTimer); clearInterval(fakeTimer);
-          pfg.style.width = '100%';
-          loadResults(d);
+        const res  = await fetch('/api/scan');
+        const data = await res.json();
+
+        // Advance the progress bar gradually while server is working
+        progress = Math.min(progress + 3, data.scanning ? 88 : 100);
+        pfg.style.width = progress + '%';
+
+        if (!data.scanning) {
+          // Scan finished — render results
+          clearInterval(pollTimer);
+          allSignals = data.signals || [];
+          document.getElementById('stScanned').textContent = data.scanned || 0;
+          document.getElementById('scanTime').textContent  = 'LAST SCAN: ' + new Date(data.ts).toLocaleTimeString('en-GB');
+          render();
           setTimeout(() => prog.classList.remove('show'), 600);
           btn.disabled = false; icon.className = ''; icon.textContent = '⟳';
+          ptxt.textContent = 'SCANNING…';
+        } else {
+          ptxt.textContent = `SCANNING… ${data.scanned || 0} / ${data.signals ? data.signals.length : 0} FOUND`;
         }
-      } catch(e) {}
-    }, 4000);
+      } catch (e) {
+        clearInterval(pollTimer);
+        throw e;
+      }
+    }, 2000);
 
-    // Safety timeout
-    setTimeout(() => {
-      clearInterval(pollTimer);
-      clearInterval(fakeTimer);
-      prog.classList.remove('show');
-      btn.disabled = false; icon.className = ''; icon.textContent = '⟳';
-    }, 5 * 60 * 1000);
-
-  } catch(e) {
-    prog.classList.remove('show');
+  } catch (e) {
+    pfg.style.width = '0%';
     showToast('⚠ Server error — try again');
-    document.getElementById('rows').innerHTML = '<div class="empty"><div class="empty-ico">⚠</div><div class="empty-txt" style="color:var(--vah)">SERVER NOT REACHABLE</div></div>';
+    document.getElementById('rows').innerHTML = `<div class="empty"><div class="empty-ico">⚠</div><div class="empty-txt" style="color:var(--vah)">SERVER NOT REACHABLE</div></div>`;
+    setTimeout(() => prog.classList.remove('show'), 600);
     btn.disabled = false; icon.className = ''; icon.textContent = '⟳';
   }
 }
 
-function loadResults(data) {
-  allSignals = data.signals || [];
-  scanTs     = data.ts;
-  document.getElementById('stScanned').textContent = data.scanned || 0;
-  document.getElementById('scanTime').textContent  = 'LAST SCAN: ' + new Date(data.ts).toLocaleTimeString('en-GB');
-  updateScanAge();
-  render();
-}
-
-async function loadCached() {
+// On page load, just read the cache (fast) so page isn't blank
+async function loadCachedResults() {
   try {
-    const r = await fetch('/api/scan');
-    const d = await r.json();
-    if (d.ts) loadResults(d);
-    else triggerScan();
-  } catch(e) { triggerScan(); }
+    const res  = await fetch('/api/scan');
+    const data = await res.json();
+    if (data.signals && data.signals.length > 0) {
+      allSignals = data.signals;
+      document.getElementById('stScanned').textContent = data.scanned || 0;
+      document.getElementById('scanTime').textContent  = 'LAST SCAN: ' + new Date(data.ts).toLocaleTimeString('en-GB');
+      render();
+    }
+    // If server is already scanning on startup, start polling immediately
+    if (data.scanning) triggerAndPoll();
+  } catch (e) { /* silently ignore on first load */ }
 }
 
-// ─── VP Histogram ─────────────────────────────────────────────────
+// ─── VP Histogram (canvas sidebar) ───────────────────────────────────────────
+// FIX #11: uses VP_BINS = 36, matching server
+const VP_BINS = 36;
+
 function drawVPHistogram(candles, vp) {
   const canvas = document.getElementById('vpHistogram');
   const wrap   = canvas.parentElement;
@@ -497,27 +655,29 @@ function drawVPHistogram(candles, vp) {
   const range = hi - lo;
   if (range === 0) return;
 
-  const BINS    = 28;
-  const binSize = range / BINS;
-  const vol     = new Array(BINS).fill(0);
+  const binSize = range / VP_BINS;
+  const vol     = new Array(VP_BINS).fill(0);
   candles.forEach(c => {
-    const idx = Math.min(Math.floor((c.typical - lo) / binSize), BINS - 1);
+    const typical = (c.high + c.low + c.close) / 3;
+    const idx = Math.min(Math.floor((typical - lo) / binSize), VP_BINS - 1);
     vol[idx] += c.volume;
   });
   const maxVol = Math.max(...vol);
 
-  const pLo    = Math.min(lo, vp.val * 0.999);
-  const pHi    = Math.max(hi, vp.vah * 1.001);
+  const pLo = Math.min(lo, vp.val * 0.999);
+  const pHi = Math.max(hi, vp.vah * 1.001);
   const pRange = pHi - pLo;
-  const py     = price => H - ((price - pLo) / pRange) * H;
+  const py = price => H - ((price - pLo) / pRange) * H;
 
-  ctx.fillStyle = 'rgba(0,255,178,0.06)';
+  // Value area fill
+  ctx.fillStyle = 'rgba(0,255,178,0.05)';
   ctx.fillRect(0, py(vp.vah), W, py(vp.val) - py(vp.vah));
 
+  // Bars
   vol.forEach((v, i) => {
     const price = lo + (i + 0.5) * binSize;
     const barH  = Math.max(1, (binSize / pRange) * H - 1);
-    const barW  = maxVol > 0 ? ((v / maxVol) * (W - 6)) : 0;
+    const barW  = maxVol > 0 ? (v / maxVol) * (W - 4) : 0;
     const y     = py(lo + (i + 1) * binSize);
     const isPOC = Math.abs(price - vp.poc) < binSize;
     const inVA  = price >= vp.val && price <= vp.vah;
@@ -525,34 +685,47 @@ function drawVPHistogram(candles, vp) {
     ctx.fillRect(0, y, barW, barH);
   });
 
-  ctx.lineWidth = 1.5; ctx.setLineDash([3,2]);
-  ctx.strokeStyle = '#FF5E3A'; ctx.beginPath(); ctx.moveTo(0,py(vp.vah)); ctx.lineTo(W,py(vp.vah)); ctx.stroke();
-  ctx.strokeStyle = '#FFD700'; ctx.beginPath(); ctx.moveTo(0,py(vp.poc)); ctx.lineTo(W,py(vp.poc)); ctx.stroke();
-  ctx.strokeStyle = '#00FFB2'; ctx.beginPath(); ctx.moveTo(0,py(vp.val)); ctx.lineTo(W,py(vp.val)); ctx.stroke();
-  ctx.setLineDash([]);
-
-  ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left';
-  ctx.fillStyle = '#FF5E3A'; ctx.fillText('VAH', 3, py(vp.vah) - 3);
-  ctx.fillStyle = '#FFD700'; ctx.fillText('POC', 3, py(vp.poc) - 3);
-  ctx.fillStyle = '#00FFB2'; ctx.fillText('VAL', 3, py(vp.val) + 11);
+  // Level lines
+  const drawLine = (price, color, label, labelBelow) => {
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 2]);
+    ctx.beginPath(); ctx.moveTo(0, py(price)); ctx.lineTo(W, py(price)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = `bold 9px monospace`; ctx.textAlign = 'left';
+    ctx.fillStyle = color;
+    ctx.fillText(label, 3, labelBelow ? py(price) + 11 : py(price) - 3);
+  };
+  drawLine(vp.vah, '#FF5E3A', 'VAH', false);
+  drawLine(vp.poc, '#FFD700', 'POC', false);
+  drawLine(vp.val, '#00FFB2', 'VAL', true);
 }
 
-// ─── Chart Modal ──────────────────────────────────────────────────
+// ─── Chart Modal ──────────────────────────────────────────────────────────────
 async function openChart(symbol, tf, sigType, vp) {
-  currentSymbol  = symbol;
-  currentTF      = tf;
-  currentSigType = sigType;
+  currentSymbol   = symbol;
+  currentTF       = tf;
+  currentSigType  = sigType;
+
+  // FIX #9: badge label from shared LABEL_MAP (not a fragile ternary)
+  const bl    = LABEL_MAP[sigType] || sigType;
+  const badge = document.getElementById('modalBadge');
+  badge.textContent = bl;
+  badge.className   = `badge ${sigType}`;
 
   document.getElementById('modalTitle').textContent = symbol;
-  const labelMap = { VAH:'▲ VAH BREAK', VAL:'▼ VAL RECLAIM', POC:'◆ POC REACT', VAL_DIV:'🔥 VAL + BULL DIV', POC_DIV:'🔥 POC + BULL DIV', WARNING:'⚠️ FAKEOUT' };
-  const badge = document.getElementById('modalBadge');
-  badge.textContent = labelMap[sigType] || sigType;
-  badge.className   = 'badge ' + sigType;
-  document.getElementById('modalTF').textContent = tf.toUpperCase();
+  document.getElementById('modalTF').textContent    = tf.toUpperCase();
   document.getElementById('modalPriceBig').textContent = '—';
   document.getElementById('modalChange').textContent   = '—';
 
-  document.querySelectorAll('.modal-tf-btn').forEach(b => b.classList.toggle('on', b.dataset.tf === tf));
+  // Clear context bar
+  ['ctxTrend','ctxEMA20','ctxEMA50','ctxVolTier','ctxVolRatio'].forEach(id => {
+    document.getElementById(id).textContent = '—';
+  });
+
+  document.querySelectorAll('.modal-tf-btn').forEach(b => {
+    b.classList.toggle('on', b.dataset.tf === tf);
+  });
+
   document.getElementById('modalOverlay').classList.add('open');
   document.getElementById('chartLoadingState').style.display = 'flex';
   document.getElementById('chartContainer').style.display    = 'none';
@@ -563,170 +736,224 @@ async function openChart(symbol, tf, sigType, vp) {
 
 async function loadChartData(symbol, tf, vpHint) {
   try {
-    const res     = await fetch('/api/candles?symbol=' + symbol + '&interval=' + tf);
-    const data    = await res.json();
+    const res  = await fetch(`/api/candles?symbol=${symbol}&interval=${tf}`);
+    const data = await res.json();
     if (!data.ok) throw new Error(data.error);
 
-    const candles  = data.candles;
-    const vp       = data.vp || vpHint;
-    const last     = candles[candles.length - 1];
-    const first    = candles[0];
+    const candles = data.candles;
+    const vp      = data.vp || vpHint;
+    const last    = candles[candles.length - 1];
+    const first   = candles[0];
+
+    // Price + change
     const change   = ((last.close - first.open) / first.open * 100).toFixed(2);
     const changeEl = document.getElementById('modalChange');
-
     document.getElementById('modalPriceBig').textContent = '$' + fp(last.close);
     changeEl.textContent = (change >= 0 ? '+' : '') + change + '%';
     changeEl.className   = 'modal-change ' + (change >= 0 ? 'up' : 'dn');
 
-    document.getElementById('infoVAH').textContent  = '$' + fp(vp.vah);
-    document.getElementById('infoPOC').textContent  = '$' + fp(vp.poc);
-    document.getElementById('infoVAL').textContent  = '$' + fp(vp.val);
+    // VP info bar
+    document.getElementById('infoVAH').textContent = '$' + fp(vp.vah);
+    document.getElementById('infoPOC').textContent = '$' + fp(vp.poc);
+    document.getElementById('infoVAL').textContent = '$' + fp(vp.val);
     const distPct = ((last.close - vp.poc) / vp.poc * 100).toFixed(2);
     document.getElementById('infoDist').textContent = (distPct >= 0 ? '+' : '') + distPct + '%';
 
+    // Trend info bar + 5th cell
+    const trend    = data.trend    || 'NEUTRAL';
+    const volTier  = data.volTier  || 'NORMAL';
+    const volRatio = data.volRatio ? data.volRatio.toFixed(2) : '—';
+    const ema20    = last.ema20 ? '$' + fp(last.ema20) : '—';
+    const ema50    = last.ema50 ? '$' + fp(last.ema50) : '—';
+
+    document.getElementById('ctxTrend').textContent    = trend === 'UP' ? '↑ WITH TREND' : trend === 'DOWN' ? '↓ COUNTER' : '→ NEUTRAL';
+    document.getElementById('ctxEMA20').textContent    = ema20;
+    document.getElementById('ctxEMA50').textContent    = ema50;
+    document.getElementById('ctxVolTier').textContent  = volTier;
+    document.getElementById('ctxVolRatio').textContent = volRatio + 'x';
+
+    const trendEl = document.getElementById('infoTrend');
+    trendEl.textContent = trend === 'UP' ? '↑ UPTREND' : trend === 'DOWN' ? '↓ DOWNTREND' : '→ NEUTRAL';
+    trendEl.className   = 'info-val ' + (trend === 'UP' ? 'trend-up' : trend === 'DOWN' ? 'trend-dn' : 'trend-n');
+
+    // Show containers after one paint frame so LightweightCharts can measure width
     document.getElementById('chartLoadingState').style.display = 'none';
     document.getElementById('chartContainer').style.display    = 'flex';
     document.getElementById('chartInfoBar').style.display      = 'grid';
 
     await new Promise(r => setTimeout(r, 150));
+
     buildLWChart(candles, vp);
     drawVPHistogram(candles, vp);
 
-  } catch(e) {
+  } catch (e) {
     document.getElementById('chartLoadingState').innerHTML =
-      '<div style="color:var(--vah);font-size:.65rem;">ERROR: ' + e.message + '</div>';
+      `<div style="color:var(--vah);font-size:.65rem;">ERROR: ${e.message}</div>`;
   }
 }
 
-function getChartWidth() {
-  const vpW = window.innerWidth > 640 ? 112 : 0;
-  return Math.max(300, Math.floor(window.innerWidth * 0.96 - vpW - 20));
-}
-
-function buildLWChart(candles, vp) {
-  // FIX: Destroy ALL three chart instances before rebuilding
+// ─── Build Lightweight Charts ─────────────────────────────────────────────────
+// FIX #14: destroy ALL three charts before rebuilding (was only destroying main)
+function destroyAllCharts() {
   if (mainChartObj) { mainChartObj.remove(); mainChartObj = null; }
   if (volChartObj)  { volChartObj.remove();  volChartObj  = null; }
   if (rsiChartObj)  { rsiChartObj.remove();  rsiChartObj  = null; }
+  candleSeries = null; volSeries = null;
+}
+
+function buildLWChart(candles, vp) {
+  destroyAllCharts();
 
   const mainEl = document.getElementById('mainChart');
   const volEl  = document.getElementById('volChart');
   const rsiEl  = document.getElementById('rsiChart');
-  const mainH  = Math.max(280, Math.floor(window.innerHeight * 0.40));
-  const mainW  = getChartWidth();
+  const mainH  = Math.max(260, window.innerHeight * 0.38);
+  const vpW    = window.innerWidth > 700 ? 112 : 0;
+  const mainW  = Math.max(300, Math.floor(window.innerWidth * 0.96 - vpW - 20));
 
   mainEl.style.height = mainH + 'px';
   mainEl.style.width  = mainW + 'px';
   volEl.style.width   = mainW + 'px';
   rsiEl.style.width   = mainW + 'px';
 
-  const sharedLayout = {
-    background:  { color: '#080F18' },
-    textColor:   '#3A6880',
-    fontFamily:  "'Space Mono', monospace",
-    fontSize:    10,
-  };
-  const sharedGrid = {
-    vertLines: { color: 'rgba(19,36,53,0.6)' },
-    horzLines: { color: 'rgba(19,36,53,0.6)' },
+  const commonOpts = {
+    layout: { background: { color: '#080F18' }, textColor: '#3A6880', fontFamily: "'Space Mono', monospace", fontSize: 9 },
+    rightPriceScale: { borderColor: '#132435', textColor: '#3A6880' },
+    timeScale: { visible: false },
+    handleScroll: false, handleScale: false,
   };
 
-  // ── Main candlestick chart ──────────────────────────────────────
+  // ── Main candlestick chart ────────────────────────────────────────────────
   mainChartObj = LightweightCharts.createChart(mainEl, {
     width: mainW, height: mainH,
-    layout: sharedLayout, grid: sharedGrid,
+    layout: { background: { color: '#080F18' }, textColor: '#3A6880', fontFamily: "'Space Mono', monospace", fontSize: 10 },
+    grid: { vertLines: { color: 'rgba(19,36,53,0.6)' }, horzLines: { color: 'rgba(19,36,53,0.6)' } },
     crosshair: {
       mode: LightweightCharts.CrosshairMode.Normal,
-      vertLine: { color:'rgba(0,191,255,0.4)', labelBackgroundColor:'#0C1A28' },
-      horzLine: { color:'rgba(0,191,255,0.4)', labelBackgroundColor:'#0C1A28' },
+      vertLine: { color: 'rgba(0,191,255,0.4)', labelBackgroundColor: '#0C1A28' },
+      horzLine: { color: 'rgba(0,191,255,0.4)', labelBackgroundColor: '#0C1A28' },
     },
-    rightPriceScale: { borderColor:'#132435', textColor:'#3A6880', scaleMargins:{ top:0.05, bottom:0.05 } },
+    rightPriceScale: { borderColor: '#132435', textColor: '#3A6880', scaleMargins: { top: 0.05, bottom: 0.05 } },
     timeScale: {
-      borderColor:'#132435', timeVisible:true, secondsVisible:false,
+      borderColor: '#132435', timeVisible: true, secondsVisible: false,
       tickMarkFormatter: (time) => {
         const d = new Date(time * 1000);
-        return (d.getMonth()+1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+        return (d.getMonth()+1) + '/' + d.getDate() + ' ' +
+               String(d.getHours()).padStart(2,'0') + ':' +
+               String(d.getMinutes()).padStart(2,'0');
       }
     },
-    handleScroll:{ mouseWheel:true, pressedMouseMove:true },
-    handleScale: { mouseWheel:true, pinch:true },
+    handleScroll: { mouseWheel: true, pressedMouseMove: true },
+    handleScale:  { mouseWheel: true, pinch: true },
   });
 
+  // Candlesticks
   candleSeries = mainChartObj.addCandlestickSeries({
-    upColor:'#00FFB2', downColor:'#FF5E3A',
-    borderUpColor:'#00FFB2', borderDownColor:'#FF5E3A',
-    wickUpColor:'rgba(0,255,178,0.6)', wickDownColor:'rgba(255,94,58,0.6)',
+    upColor: '#00FFB2', downColor: '#FF5E3A',
+    borderUpColor: '#00FFB2', borderDownColor: '#FF5E3A',
+    wickUpColor: 'rgba(0,255,178,0.6)', wickDownColor: 'rgba(255,94,58,0.6)',
   });
 
-  const lwCandles = candles.map(c => ({ time: Math.floor(c.time/1000), open:c.open, high:c.high, low:c.low, close:c.close }));
+  const lwCandles = candles.map(c => ({
+    time: Math.floor(c.time / 1000),
+    open: c.open, high: c.high, low: c.low, close: c.close,
+  }));
   candleSeries.setData(lwCandles);
 
   // VP level lines
-  const makeFlat = (val) => lwCandles.map(c => ({ time:c.time, value:val }));
-  const addLine  = (color, title) => mainChartObj.addLineSeries({ color, lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, title, priceLineVisible:false, lastValueVisible:true, crosshairMarkerVisible:false });
-  addLine('#FF5E3A','VAH').setData(makeFlat(vp.vah));
-  addLine('#FFD700','POC').setData(makeFlat(vp.poc));
-  addLine('#00FFB2','VAL').setData(makeFlat(vp.val));
+  const makeFlatLine = (val) => lwCandles.map(c => ({ time: c.time, value: val }));
+  const addLevel = (val, color, title) => {
+    const s = mainChartObj.addLineSeries({ color, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title, priceLineVisible: false, lastValueVisible: true, crosshairMarkerVisible: false });
+    s.setData(makeFlatLine(val));
+    candleSeries.createPriceLine({ price: val, color, lineWidth: 2, lineStyle: 2, axisLabelVisible: true, title: `◀ ${title}` });
+  };
+  addLevel(vp.vah, '#FF5E3A', 'VAH');
+  addLevel(vp.poc, '#FFD700', 'POC');
+  addLevel(vp.val, '#00FFB2', 'VAL');
 
-  candleSeries.createPriceLine({ price:vp.vah, color:'#FF5E3A', lineWidth:2, lineStyle:2, axisLabelVisible:true, title:'◀ VAH' });
-  candleSeries.createPriceLine({ price:vp.poc, color:'#FFD700', lineWidth:2, lineStyle:2, axisLabelVisible:true, title:'◀ POC' });
-  candleSeries.createPriceLine({ price:vp.val, color:'#00FFB2', lineWidth:2, lineStyle:2, axisLabelVisible:true, title:'◀ VAL' });
+  // ── NEW: EMA lines on main chart ──────────────────────────────────────────
+  // These show the EMA20 (orange) and EMA50 (purple) directly on the candle chart
+  // so you can visually see whether price is above or below both EMAs.
+  const ema20Data = candles
+    .filter(c => c.ema20 && c.ema20 > 0)
+    .map(c => ({ time: Math.floor(c.time / 1000), value: c.ema20 }));
+  const ema50Data = candles
+    .filter(c => c.ema50 && c.ema50 > 0)
+    .map(c => ({ time: Math.floor(c.time / 1000), value: c.ema50 }));
 
-  // Signal marker
+  if (ema20Data.length > 0) {
+    const ema20Series = mainChartObj.addLineSeries({
+      color: '#FF9500', lineWidth: 1.5,
+      title: 'EMA20', priceLineVisible: false, lastValueVisible: true,
+      crosshairMarkerVisible: false,
+    });
+    ema20Series.setData(ema20Data);
+  }
+
+  if (ema50Data.length > 0) {
+    const ema50Series = mainChartObj.addLineSeries({
+      color: '#BF5FFF', lineWidth: 1.5,
+      title: 'EMA50', priceLineVisible: false, lastValueVisible: true,
+      crosshairMarkerVisible: false,
+    });
+    ema50Series.setData(ema50Data);
+  }
+
+  // Signal marker on last candle
   const last     = lwCandles[lwCandles.length - 1];
-  const sigColor = currentSigType === 'VAH' ? '#FF5E3A' : currentSigType === 'VAL' ? '#00FFB2' : '#FFD700';
-  const sigShape = currentSigType === 'VAH' ? 'arrowUp' : currentSigType === 'VAL' ? 'arrowDown' : 'circle';
-  const sigPos   = currentSigType === 'VAH' ? 'belowBar' : 'aboveBar';
-  candleSeries.setMarkers([{ time:last.time, position:sigPos, color:sigColor, shape:sigShape, text:currentSigType, size:2 }]);
+  const sigColor = currentSigType.startsWith('VAH') ? '#FF5E3A' : currentSigType.startsWith('VAL') ? '#00FFB2' : '#FFD700';
+  const sigShape = currentSigType.startsWith('VAH') ? 'arrowUp'  : currentSigType.startsWith('VAL') ? 'arrowDown' : 'circle';
+  const sigPos   = currentSigType.startsWith('VAH') ? 'belowBar' : 'aboveBar';
+  candleSeries.setMarkers([{ time: last.time, position: sigPos, color: sigColor, shape: sigShape, text: currentSigType, size: 2 }]);
 
-  // Crosshair tooltip
+  // Tooltip
   const tooltip = document.getElementById('chartTooltip');
   mainChartObj.subscribeCrosshairMove(param => {
     if (!param.time || !param.seriesData) { tooltip.style.display = 'none'; return; }
     const cd = param.seriesData.get(candleSeries);
     if (!cd) { tooltip.style.display = 'none'; return; }
     const d   = new Date(param.time * 1000);
-    const fmt = n => n.toLocaleString('en', { minimumFractionDigits:4, maximumFractionDigits:6 });
+    const fmt = n => n.toLocaleString('en', { minimumFractionDigits: 4, maximumFractionDigits: 6 });
     document.getElementById('ttTime').textContent  = (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
     document.getElementById('ttOpen').textContent  = '$' + fmt(cd.open);
     document.getElementById('ttHigh').textContent  = '$' + fmt(cd.high);
     document.getElementById('ttLow').textContent   = '$' + fmt(cd.low);
     document.getElementById('ttClose').textContent = '$' + fmt(cd.close);
-    const match = candles.find(c => Math.floor(c.time/1000) === param.time);
-    document.getElementById('ttVol').textContent   = match ? match.volume.toLocaleString('en',{maximumFractionDigits:0}) : '—';
     tooltip.style.display = 'block';
+    const match = candles.find(c => Math.floor(c.time / 1000) === param.time);
+    document.getElementById('ttVol').textContent = match ? match.volume.toLocaleString('en', { maximumFractionDigits: 0 }) : '—';
   });
 
-  // ── Volume chart ──────────────────────────────────────────────
+  // ── Volume chart ──────────────────────────────────────────────────────────
   volChartObj = LightweightCharts.createChart(volEl, {
-    width:mainW, height:80,
-    layout:{ background:{color:'#080F18'}, textColor:'#3A6880', fontFamily:"'Space Mono', monospace", fontSize:9 },
-    grid:{ vertLines:{ color:'rgba(19,36,53,0.4)' }, horzLines:{ visible:false } },
-    rightPriceScale:{ borderColor:'#132435', textColor:'#3A6880', scaleMargins:{ top:0.1, bottom:0 } },
-    timeScale:{ visible:false },
-    crosshair:{ horzLine:{ visible:false }, vertLine:{ color:'rgba(0,191,255,0.3)' } },
-    handleScroll:false, handleScale:false,
+    ...commonOpts,
+    width: mainW, height: 70,
+    grid: { vertLines: { color: 'rgba(19,36,53,0.4)' }, horzLines: { visible: false } },
+    rightPriceScale: { ...commonOpts.rightPriceScale, scaleMargins: { top: 0.1, bottom: 0 } },
+    crosshair: { horzLine: { visible: false }, vertLine: { color: 'rgba(0,191,255,0.3)' } },
   });
 
-  const volSeries = volChartObj.addHistogramSeries({ priceFormat:{ type:'volume' }, priceScaleId:'' });
-  volSeries.setData(candles.map(c => ({ time:Math.floor(c.time/1000), value:c.volume, color:c.close>=c.open?'rgba(0,255,178,0.4)':'rgba(255,94,58,0.35)' })));
+  volSeries = volChartObj.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: '' });
+  volSeries.setData(candles.map(c => ({
+    time:  Math.floor(c.time / 1000),
+    value: c.volume,
+    color: c.close >= c.open ? 'rgba(0,255,178,0.4)' : 'rgba(255,94,58,0.35)',
+  })));
 
-  // ── RSI chart ─────────────────────────────────────────────────
+  // ── RSI chart ─────────────────────────────────────────────────────────────
   rsiChartObj = LightweightCharts.createChart(rsiEl, {
-    width:mainW, height:80,
-    layout:{ background:{color:'#080F18'}, textColor:'#3A6880', fontFamily:"'Space Mono', monospace", fontSize:9 },
-    grid:{ vertLines:{ color:'rgba(19,36,53,0.4)' }, horzLines:{ color:'rgba(19,36,53,0.4)' } },
-    rightPriceScale:{ borderColor:'#132435', textColor:'#3A6880', scaleMargins:{ top:0.1, bottom:0.1 } },
-    timeScale:{ visible:false },
-    handleScroll:false, handleScale:false,
+    ...commonOpts,
+    width: mainW, height: 70,
+    grid: { vertLines: { color: 'rgba(19,36,53,0.4)' }, horzLines: { color: 'rgba(19,36,53,0.4)' } },
+    rightPriceScale: { ...commonOpts.rightPriceScale, scaleMargins: { top: 0.1, bottom: 0.1 } },
   });
 
-  const rsiSeries = rsiChartObj.addLineSeries({ color:'#CF9FFF', lineWidth:2 });
-  rsiSeries.setData(candles.map(c => ({ time:Math.floor(c.time/1000), value:c.rsi || 50 })));
-  rsiSeries.createPriceLine({ price:70, color:'rgba(255,94,58,0.4)',  lineWidth:1, lineStyle:2, axisLabelVisible:true, title:'OB' });
-  rsiSeries.createPriceLine({ price:30, color:'rgba(0,255,178,0.4)',  lineWidth:1, lineStyle:2, axisLabelVisible:true, title:'OS' });
+  const rsiSeries = rsiChartObj.addLineSeries({ color: '#CF9FFF', lineWidth: 2, priceScaleId: '' });
+  rsiSeries.setData(candles.map(c => ({ time: Math.floor(c.time / 1000), value: c.rsi || 50 })));
+  rsiSeries.createPriceLine({ price: 70, color: 'rgba(255,94,58,0.4)',  lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'OB' });
+  rsiSeries.createPriceLine({ price: 30, color: 'rgba(0,255,178,0.4)', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'OS' });
 
-  // Sync all three time scales together
+  // ── Sync all time scales together ─────────────────────────────────────────
   mainChartObj.timeScale().subscribeVisibleLogicalRangeChange(range => {
     if (range) { volChartObj.timeScale().setVisibleLogicalRange(range); rsiChartObj.timeScale().setVisibleLogicalRange(range); }
   });
@@ -739,54 +966,72 @@ function switchModalTF(btn) {
   btn.classList.add('on');
   currentTF = btn.dataset.tf;
   document.getElementById('modalTF').textContent = currentTF.toUpperCase();
+
+  // FIX #14: destroyAllCharts() is called inside buildLWChart so all 3 are cleaned up
   document.getElementById('chartLoadingState').style.display = 'flex';
-  document.getElementById('chartLoadingState').innerHTML = '<div>LOADING CHART DATA…</div><div class="loading-bar"><div class="loading-bar-inner"></div></div>';
+  document.getElementById('chartLoadingState').innerHTML =
+    '<div>LOADING CHART DATA…</div><div class="loading-bar"><div class="loading-bar-inner"></div></div>';
   document.getElementById('chartContainer').style.display = 'none';
   document.getElementById('chartInfoBar').style.display   = 'none';
+
   loadChartData(currentSymbol, currentTF, null);
 }
 
 function closeModal() {
   document.getElementById('modalOverlay').classList.remove('open');
-  // FIX: Destroy ALL chart instances on close
-  if (mainChartObj) { mainChartObj.remove(); mainChartObj = null; }
-  if (volChartObj)  { volChartObj.remove();  volChartObj  = null; }
-  if (rsiChartObj)  { rsiChartObj.remove();  rsiChartObj  = null; }
+  destroyAllCharts(); // FIX #14: clean up all charts on close
 }
 function handleOverlayClick(e) {
   if (e.target === document.getElementById('modalOverlay')) closeModal();
 }
 
-// ─── Filter toggles ───────────────────────────────────────────────
+// ─── Filter toggles ───────────────────────────────────────────────────────────
 function togTF(el) {
-  const tf  = el.dataset.tf;
+  const tf = el.dataset.tf;
   if (activeTFs.has(tf)) { if (activeTFs.size === 1) return; activeTFs.delete(tf); el.classList.remove('on'); }
   else { activeTFs.add(tf); el.classList.add('on'); }
   render();
 }
 function togSig(el) {
-  const sig = el.dataset.sig; const cls = 'on-' + sig.toLowerCase();
+  const sig = el.dataset.sig;
+  const cls = `on-${sig.toLowerCase()}`;
   if (activeSigs.has(sig)) { if (activeSigs.size === 1) return; activeSigs.delete(sig); el.classList.remove(cls); }
   else { activeSigs.add(sig); el.classList.add(cls); }
   render();
 }
+// FIX #13: WARNING toggle
+function togWarn(el) {
+  showWarnings = !showWarnings;
+  el.style.opacity = showWarnings ? '1' : '0.45';
+  render();
+}
 
-// ─── FIX: Resize ALL three charts ────────────────────────────────
+// ─── FIX #10: resize ALL three charts, not just main ─────────────────────────
 window.addEventListener('resize', () => {
   if (!mainChartObj) return;
-  const mainW = getChartWidth();
-  document.getElementById('mainChart').style.width = mainW + 'px';
-  document.getElementById('volChart').style.width  = mainW + 'px';
-  document.getElementById('rsiChart').style.width  = mainW + 'px';
+  const vpW   = window.innerWidth > 700 ? 112 : 0;
+  const mainW = Math.max(300, Math.floor(window.innerWidth * 0.96 - vpW - 20));
+
+  ['mainChart','volChart','rsiChart'].forEach(id => {
+    document.getElementById(id).style.width = mainW + 'px';
+  });
   mainChartObj.applyOptions({ width: mainW });
   if (volChartObj)  volChartObj.applyOptions({ width: mainW });
   if (rsiChartObj)  rsiChartObj.applyOptions({ width: mainW });
 });
 
-// ─── Init ─────────────────────────────────────────────────────────
+// ─── Init ─────────────────────────────────────────────────────────────────────
+function startRefresh() {
+  clearInterval(refreshTimer);
+  // Auto-refresh every 30 min: trigger a real scan + poll
+  refreshTimer = setInterval(triggerAndPoll, 30 * 60 * 1000);
+}
+
 window.addEventListener('DOMContentLoaded', () => {
-  loadCached();
-  refreshTimer = setInterval(triggerScan, 30 * 60 * 1000);
+  // Warn toggle starts as off
+  document.getElementById('warnBtn').style.opacity = '0.45';
+  loadCachedResults(); // fast: show whatever the server already has
+  startRefresh();
 });
 window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 </script>
